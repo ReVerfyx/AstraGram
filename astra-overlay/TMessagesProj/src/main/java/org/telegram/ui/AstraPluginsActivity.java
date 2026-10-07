@@ -10,21 +10,17 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.R;
-import org.telegram.messenger.astra.AstraSettings;
 import org.telegram.messenger.astra.plugins.AstraPluginStore;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.AstraPluginCell;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
-import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
@@ -60,16 +56,7 @@ public class AstraPluginsActivity extends BaseFragment {
         listView = new RecyclerListView(context);
         listView.setLayoutManager(new LinearLayoutManager(context));
         listView.setVerticalScrollBarEnabled(false);
-        listView.setClipToPadding(false);
-        listView.setPadding(0, 0, 0, org.telegram.messenger.AndroidUtilities.dp(16));
         listView.setAdapter(adapter = new ListAdapter(context));
-
-        DefaultItemAnimator animator = new DefaultItemAnimator();
-        animator.setDurations(AstraSettings.animationDuration(context, 260));
-        animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-        animator.setSupportsChangeAnimations(false);
-        listView.setItemAnimator(animator);
-
         listView.setOnItemClickListener((view, position) -> {
             if (position == 1) {
                 pickPlugin();
@@ -128,9 +115,8 @@ public class AstraPluginsActivity extends BaseFragment {
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
         private static final int TYPE_HEADER = 0;
-        private static final int TYPE_INSTALL = 1;
-        private static final int TYPE_PLUGIN = 2;
-        private static final int TYPE_INFO = 3;
+        private static final int TYPE_VALUE = 1;
+        private static final int TYPE_INFO = 2;
 
         private final Context context;
 
@@ -155,10 +141,8 @@ public class AstraPluginsActivity extends BaseFragment {
             View view;
             if (viewType == TYPE_HEADER) {
                 view = new HeaderCell(context);
-            } else if (viewType == TYPE_INSTALL) {
+            } else if (viewType == TYPE_VALUE) {
                 view = new TextSettingsCell(context);
-            } else if (viewType == TYPE_PLUGIN) {
-                view = new AstraPluginCell(context);
             } else {
                 view = new TextInfoPrivacyCell(context);
             }
@@ -174,24 +158,18 @@ public class AstraPluginsActivity extends BaseFragment {
             if (position == 0) {
                 ((HeaderCell) holder.itemView).setText("Extensions");
             } else if (position == 1) {
-                ((TextSettingsCell) holder.itemView).setTextAndValue(
-                        "Install plugin",
-                        "Choose an .asplug file",
-                        false
-                );
+                ((TextSettingsCell) holder.itemView).setTextAndValue("Install plugin", ".asplug", plugins.isEmpty());
             } else if (position >= 2 && position < 2 + plugins.size()) {
                 AstraPluginStore.InstalledPlugin plugin = plugins.get(position - 2);
-                ((AstraPluginCell) holder.itemView).setData(
-                        plugin.manifest.name,
-                        plugin.manifest.version,
-                        plugin.enabled,
-                        plugin.manifest.permissions.size()
-                );
+                String state = plugin.enabled ? "enabled" : "disabled";
+                String value = "v" + plugin.manifest.version + " • " + state + " • "
+                        + plugin.manifest.permissions.size() + " permissions";
+                ((TextSettingsCell) holder.itemView).setTextAndValue(plugin.manifest.name, value, position < 1 + plugins.size());
             } else {
                 ((TextInfoPrivacyCell) holder.itemView).setText(
                         plugins.isEmpty()
-                                ? "No plugins installed yet. Add an .asplug file to start."
-                                : "Plugins stay disabled until you explicitly grant their requested permissions."
+                                ? "No plugins installed. AstraGram validates the package before it is added."
+                                : "Installed plugins do not receive requested permissions automatically."
                 );
             }
         }
@@ -201,13 +179,10 @@ public class AstraPluginsActivity extends BaseFragment {
             if (position == 0) {
                 return TYPE_HEADER;
             }
-            if (position == 1) {
-                return TYPE_INSTALL;
+            if (position == 2 + plugins.size()) {
+                return TYPE_INFO;
             }
-            if (position >= 2 && position < 2 + plugins.size()) {
-                return TYPE_PLUGIN;
-            }
-            return TYPE_INFO;
+            return TYPE_VALUE;
         }
     }
 }

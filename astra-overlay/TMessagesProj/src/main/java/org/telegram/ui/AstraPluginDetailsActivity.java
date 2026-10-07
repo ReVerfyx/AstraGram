@@ -7,22 +7,18 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.R;
-import org.telegram.messenger.astra.AstraSettings;
 import org.telegram.messenger.astra.plugins.AsplugPermission;
 import org.telegram.messenger.astra.plugins.AstraPluginStore;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.AstraPluginCell;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
-import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
@@ -68,17 +64,7 @@ public class AstraPluginDetailsActivity extends BaseFragment {
 
         listView = new RecyclerListView(context);
         listView.setLayoutManager(new LinearLayoutManager(context));
-        listView.setClipToPadding(false);
-        listView.setPadding(0, org.telegram.messenger.AndroidUtilities.dp(8), 0,
-                org.telegram.messenger.AndroidUtilities.dp(16));
         listView.setAdapter(adapter = new Adapter(context));
-
-        DefaultItemAnimator animator = new DefaultItemAnimator();
-        animator.setDurations(AstraSettings.animationDuration(context, 240));
-        animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-        animator.setSupportsChangeAnimations(false);
-        listView.setItemAnimator(animator);
-
         listView.setOnItemClickListener((view, position) -> onRowClicked(context, position));
         frame.addView(listView, LayoutHelper.createFrame(
                 LayoutHelper.MATCH_PARENT,
@@ -124,10 +110,9 @@ public class AstraPluginDetailsActivity extends BaseFragment {
     }
 
     private class Adapter extends RecyclerListView.SelectionAdapter {
-        private static final int TYPE_SUMMARY = 0;
-        private static final int TYPE_HEADER = 1;
-        private static final int TYPE_CHECK = 2;
-        private static final int TYPE_INFO = 3;
+        private static final int TYPE_HEADER = 0;
+        private static final int TYPE_CHECK = 1;
+        private static final int TYPE_INFO = 2;
         private final Context context;
 
         Adapter(Context context) {
@@ -149,9 +134,7 @@ public class AstraPluginDetailsActivity extends BaseFragment {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view;
-            if (viewType == TYPE_SUMMARY) {
-                view = new AstraPluginCell(context);
-            } else if (viewType == TYPE_HEADER) {
+            if (viewType == TYPE_HEADER) {
                 view = new HeaderCell(context);
             } else if (viewType == TYPE_CHECK) {
                 view = new TextCheckCell(context);
@@ -167,15 +150,9 @@ public class AstraPluginDetailsActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            if (holder.getItemViewType() == TYPE_SUMMARY) {
-                ((AstraPluginCell) holder.itemView).setData(
-                        plugin.manifest.name,
-                        plugin.manifest.version,
-                        plugin.enabled,
-                        plugin.manifest.permissions.size()
-                );
-            } else if (holder.getItemViewType() == TYPE_HEADER) {
-                ((HeaderCell) holder.itemView).setText("Permissions");
+            if (holder.getItemViewType() == TYPE_HEADER) {
+                HeaderCell cell = (HeaderCell) holder.itemView;
+                cell.setText(position == 0 ? "Plugin" : "Permissions");
             } else if (holder.getItemViewType() == TYPE_CHECK) {
                 TextCheckCell cell = (TextCheckCell) holder.itemView;
                 if (position == 1) {
@@ -187,39 +164,22 @@ public class AstraPluginDetailsActivity extends BaseFragment {
                 } else {
                     AsplugPermission permission = permissions.get(position - permissionsStart());
                     cell.setTextAndCheck(
-                            friendlyName(permission),
+                            permission.wireName(),
                             AstraPluginStore.isPermissionGranted(context, pluginId, permission),
                             position < infoRow() - 1
                     );
                 }
             } else {
-                ((TextInfoPrivacyCell) holder.itemView).setText(
-                        "AstraGram enables this plugin only after all requested permissions are granted. Revoking one of them disables the plugin automatically."
+                TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
+                cell.setText(
+                        "AstraGram only enables this plugin after every permission requested by its manifest is granted. Revoking a permission disables the plugin."
                 );
-            }
-        }
-
-        private String friendlyName(AsplugPermission permission) {
-            switch (permission) {
-                case UI: return "Modify interface";
-                case NETWORK: return "Internet access";
-                case FILES_READ: return "Read files";
-                case FILES_WRITE: return "Write files";
-                case MESSAGES_READ: return "Read messages";
-                case MESSAGES_SEND: return "Send messages";
-                case PROFILE_READ: return "Read profile";
-                case PROFILE_WRITE: return "Change profile";
-                case AUTOMATION: return "Run automations";
-                default: return permission.wireName();
             }
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (position == 0) {
-                return TYPE_SUMMARY;
-            }
-            if (position == 2) {
+            if (position == 0 || position == 2) {
                 return TYPE_HEADER;
             }
             if (position == infoRow()) {

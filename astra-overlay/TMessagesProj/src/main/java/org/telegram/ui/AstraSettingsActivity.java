@@ -16,7 +16,6 @@ import org.telegram.messenger.astra.ai.AstraProviderStore;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.AstraHeroCell;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
@@ -26,29 +25,27 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 public class AstraSettingsActivity extends BaseFragment {
-    private static final int TYPE_HERO = 0;
-    private static final int TYPE_HEADER = 1;
-    private static final int TYPE_CHECK = 2;
-    private static final int TYPE_VALUE = 3;
-    private static final int TYPE_INFO = 4;
+    private static final int TYPE_HEADER = 0;
+    private static final int TYPE_CHECK = 1;
+    private static final int TYPE_VALUE = 2;
+    private static final int TYPE_INFO = 3;
 
-    private static final int ROW_HERO = 0;
-    private static final int ROW_APPEARANCE = 1;
-    private static final int ROW_ANIMATIONS = 2;
-    private static final int ROW_MOTION = 3;
-    private static final int ROW_APPEARANCE_INFO = 4;
+    private static final int ROW_APPEARANCE = 0;
+    private static final int ROW_ANIMATIONS = 1;
+    private static final int ROW_MOTION = 2;
+    private static final int ROW_APPEARANCE_INFO = 3;
 
-    private static final int ROW_AUTOMATION = 5;
-    private static final int ROW_PROFILE_STUDIO = 6;
-    private static final int ROW_PROFILE_AUTOMATION = 7;
-    private static final int ROW_PROVIDER = 8;
-    private static final int ROW_PROVIDER_CONFIG = 9;
-    private static final int ROW_AUTOMATION_INFO = 10;
+    private static final int ROW_AUTOMATION = 4;
+    private static final int ROW_PROFILE_STUDIO = 5;
+    private static final int ROW_PROFILE_AUTOMATION = 6;
+    private static final int ROW_PROVIDER = 7;
+    private static final int ROW_PROVIDER_CONFIG = 8;
+    private static final int ROW_AUTOMATION_INFO = 9;
 
-    private static final int ROW_EXTENSIONS = 11;
-    private static final int ROW_PLUGINS = 12;
-    private static final int ROW_EXTENSIONS_INFO = 13;
-    private static final int ROW_COUNT = 14;
+    private static final int ROW_EXTENSIONS = 10;
+    private static final int ROW_PLUGINS = 11;
+    private static final int ROW_EXTENSIONS_INFO = 12;
+    private static final int ROW_COUNT = 13;
 
     private RecyclerListView listView;
     private ListAdapter adapter;
@@ -76,12 +73,10 @@ public class AstraSettingsActivity extends BaseFragment {
         actionBar.setAdaptiveBackground(listView);
         listView.setLayoutManager(new LinearLayoutManager(context));
         listView.setVerticalScrollBarEnabled(false);
-        listView.setClipToPadding(false);
-        listView.setPadding(0, 0, 0, org.telegram.messenger.AndroidUtilities.dp(14));
         listView.setAdapter(adapter = new ListAdapter(context));
 
         DefaultItemAnimator animator = new DefaultItemAnimator();
-        animator.setDurations(AstraSettings.animationDuration(context, 280));
+        animator.setDurations(AstraSettings.animationDuration(context, 260));
         animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
         animator.setDelayAnimations(false);
         animator.setSupportsChangeAnimations(false);
@@ -169,9 +164,7 @@ public class AstraSettingsActivity extends BaseFragment {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view;
-            if (viewType == TYPE_HERO) {
-                view = new AstraHeroCell(context);
-            } else if (viewType == TYPE_HEADER) {
+            if (viewType == TYPE_HEADER) {
                 view = new HeaderCell(context);
             } else if (viewType == TYPE_CHECK) {
                 view = new TextCheckCell(context);
@@ -189,9 +182,6 @@ public class AstraSettingsActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            if (holder.getItemViewType() == TYPE_HERO) {
-                return;
-            }
             if (holder.getItemViewType() == TYPE_HEADER) {
                 HeaderCell cell = (HeaderCell) holder.itemView;
                 if (position == ROW_APPEARANCE) {
@@ -207,11 +197,11 @@ public class AstraSettingsActivity extends BaseFragment {
                     cell.setTextAndCheck(
                             "Astra animations",
                             AstraSettings.animationsEnabled(context),
-                            true
+                            false
                     );
                 } else {
                     cell.setTextAndCheck(
-                            "Apply changes automatically",
+                            "Apply approved changes automatically",
                             AstraSettings.profileAutomationEnabled(context),
                             false
                     );
@@ -221,7 +211,7 @@ public class AstraSettingsActivity extends BaseFragment {
                 if (position == ROW_MOTION) {
                     cell.setTextAndValue("Motion style", motionLabel(context), false);
                 } else if (position == ROW_PROFILE_STUDIO) {
-                    cell.setTextAndValue("Profile Studio", "Design my profile", true);
+                    cell.setTextAndValue("Profile Studio", "Do it for me", true);
                 } else if (position == ROW_PROVIDER) {
                     cell.setTextAndValue("AI provider", providerLabel(context), true);
                 } else if (position == ROW_PROVIDER_CONFIG) {
@@ -232,20 +222,17 @@ public class AstraSettingsActivity extends BaseFragment {
             } else {
                 TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                 if (position == ROW_APPEARANCE_INFO) {
-                    cell.setText("Smooth motion is enabled by default. You can reduce or disable it at any time.");
+                    cell.setText("Smooth motion is enabled by default. You can reduce or disable it here.");
                 } else if (position == ROW_AUTOMATION_INFO) {
-                    cell.setText("Profile Studio can generate and apply your name, bio and avatar in one action.");
+                    cell.setText("Profile Studio can apply generated names, bios and avatars directly after you start the action.");
                 } else {
-                    cell.setText("Install AstraGram extensions and control every permission they request.");
+                    cell.setText("Install and manage AstraGram extension packages.");
                 }
             }
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (position == ROW_HERO) {
-                return TYPE_HERO;
-            }
             if (position == ROW_APPEARANCE || position == ROW_AUTOMATION || position == ROW_EXTENSIONS) {
                 return TYPE_HEADER;
             }
