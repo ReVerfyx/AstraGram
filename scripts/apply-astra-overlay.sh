@@ -13,8 +13,12 @@ for patch in "${ROOT}"/patches/*.patch; do
   [[ -e "${patch}" ]] || continue
   if git -C "${UPSTREAM_DIR}" apply --check "${patch}"; then
     git -C "${UPSTREAM_DIR}" apply "${patch}"
+  else
+    echo "Patch does not apply cleanly: ${patch}" >&2
+    exit 1
   fi
 done
 
 cp -a "${ROOT}/astra-overlay/." "${UPSTREAM_DIR}/"
+"${ROOT}/scripts/brand-astra.sh"
 echo "AstraGram overlay applied."

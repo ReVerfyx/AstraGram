@@ -15,6 +15,8 @@ fi
 git -C "${UPSTREAM_DIR}" fetch --depth 1 origin "${UPSTREAM_REV}"
 git -C "${UPSTREAM_DIR}" reset --hard "${UPSTREAM_REV}"
 git -C "${UPSTREAM_DIR}" clean -fdx
+git -C "${UPSTREAM_DIR}" submodule sync --recursive
+git -C "${UPSTREAM_DIR}" submodule update --init --recursive --depth=1
 
 "${ROOT}/scripts/apply-astra-overlay.sh"
 
