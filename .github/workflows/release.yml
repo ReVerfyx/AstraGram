@@ -55,7 +55,6 @@ jobs:
             echo "GOOGLE_SERVICES_JSON_BASE64 secret is required for release builds." >&2
             exit 1
           fi
-          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > vendor/telegram/TMessagesProj/google-services.json
           printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > vendor/telegram/TMessagesProj_App/google-services.json
 
       - name: Build release
