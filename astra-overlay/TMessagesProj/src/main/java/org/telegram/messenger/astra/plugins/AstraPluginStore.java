@@ -51,6 +51,7 @@ public final class AstraPluginStore {
                 }
             }
             setEnabled(context, manifest.id, false);
+            clearPermissions(context, manifest);
             return new InstalledPlugin(target, manifest, false);
         } catch (IOException | JSONException error) {
             if (temp.exists() && !temp.delete()) {
@@ -80,6 +81,15 @@ public final class AstraPluginStore {
     }
 
     public static void setEnabled(Context context, String id, boolean enabled) {
+        if (enabled) {
+            InstalledPlugin plugin = find(context, id);
+            if (plugin == null) {
+                throw new IllegalArgumentException("Plugin is not installed");
+            }
+            if (!hasAllPermissions(context, plugin.manifest)) {
+                throw new SecurityException("Grant the requested permissions first");
+            }
+        }
         prefs(context).edit().putBoolean("enabled:" + id, enabled).apply();
     }
 
@@ -87,11 +97,55 @@ public final class AstraPluginStore {
         return prefs(context).getBoolean("enabled:" + id, false);
     }
 
+    public static void setPermissionGranted(
+            Context context,
+            String pluginId,
+            AsplugPermission permission,
+            boolean granted
+    ) {
+        prefs(context).edit()
+                .putBoolean(permissionKey(pluginId, permission), granted)
+                .apply();
+        if (!granted) {
+            prefs(context).edit().putBoolean("enabled:" + pluginId, false).apply();
+        }
+    }
+
+    public static boolean isPermissionGranted(
+            Context context,
+            String pluginId,
+            AsplugPermission permission
+    ) {
+        return prefs(context).getBoolean(permissionKey(pluginId, permission), false);
+    }
+
+    public static boolean hasAllPermissions(Context context, AsplugManifest manifest) {
+        for (AsplugPermission permission : manifest.permissions) {
+            if (!isPermissionGranted(context, manifest.id, permission)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static InstalledPlugin find(Context context, String id) {
+        for (InstalledPlugin plugin : list(context)) {
+            if (plugin.manifest.id.equals(id)) {
+                return plugin;
+            }
+        }
+        return null;
+    }
+
     public static boolean uninstall(Context context, InstalledPlugin plugin) {
         if (plugin == null) {
             return false;
         }
-        prefs(context).edit().remove("enabled:" + plugin.manifest.id).apply();
+        SharedPreferences.Editor editor = prefs(context).edit().remove("enabled:" + plugin.manifest.id);
+        for (AsplugPermission permission : plugin.manifest.permissions) {
+            editor.remove(permissionKey(plugin.manifest.id, permission));
+        }
+        editor.apply();
         return !plugin.file.exists() || plugin.file.delete();
     }
 
@@ -105,6 +159,18 @@ public final class AstraPluginStore {
 
     private static SharedPreferences prefs(Context context) {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    private static void clearPermissions(Context context, AsplugManifest manifest) {
+        SharedPreferences.Editor editor = prefs(context).edit();
+        for (AsplugPermission permission : manifest.permissions) {
+            editor.remove(permissionKey(manifest.id, permission));
+        }
+        editor.apply();
+    }
+
+    private static String permissionKey(String pluginId, AsplugPermission permission) {
+        return "permission:" + pluginId + ":" + permission.wireName();
     }
 
     private static String safeFileName(String id) {

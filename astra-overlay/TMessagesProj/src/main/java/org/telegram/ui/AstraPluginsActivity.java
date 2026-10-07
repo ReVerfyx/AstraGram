@@ -60,11 +60,21 @@ public class AstraPluginsActivity extends BaseFragment {
         listView.setOnItemClickListener((view, position) -> {
             if (position == 1) {
                 pickPlugin();
+            } else if (position >= 2 && position < 2 + plugins.size()) {
+                presentFragment(new AstraPluginDetailsActivity(plugins.get(position - 2).manifest.id));
             }
         });
         frame.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         reload(context);
         return fragmentView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getParentActivity() != null) {
+            reload(getParentActivity());
+        }
     }
 
     private void pickPlugin() {
@@ -121,7 +131,8 @@ public class AstraPluginsActivity extends BaseFragment {
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getAdapterPosition() == 1;
+            int position = holder.getAdapterPosition();
+            return position == 1 || (position >= 2 && position < 2 + plugins.size());
         }
 
         @NonNull
@@ -150,7 +161,9 @@ public class AstraPluginsActivity extends BaseFragment {
                 ((TextSettingsCell) holder.itemView).setTextAndValue("Install plugin", ".asplug", plugins.isEmpty());
             } else if (position >= 2 && position < 2 + plugins.size()) {
                 AstraPluginStore.InstalledPlugin plugin = plugins.get(position - 2);
-                String value = "v" + plugin.manifest.version + " • " + plugin.manifest.permissions.size() + " permissions";
+                String state = plugin.enabled ? "enabled" : "disabled";
+                String value = "v" + plugin.manifest.version + " • " + state + " • "
+                        + plugin.manifest.permissions.size() + " permissions";
                 ((TextSettingsCell) holder.itemView).setTextAndValue(plugin.manifest.name, value, position < 1 + plugins.size());
             } else {
                 ((TextInfoPrivacyCell) holder.itemView).setText(

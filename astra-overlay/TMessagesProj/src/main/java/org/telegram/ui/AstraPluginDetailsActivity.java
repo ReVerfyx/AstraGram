@@ -1,0 +1,191 @@
+package org.telegram.ui;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.telegram.messenger.R;
+import org.telegram.messenger.astra.plugins.AsplugPermission;
+import org.telegram.messenger.astra.plugins.AstraPluginStore;
+import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.HeaderCell;
+import org.telegram.ui.Cells.TextCheckCell;
+import org.telegram.ui.Cells.TextInfoPrivacyCell;
+import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RecyclerListView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AstraPluginDetailsActivity extends BaseFragment {
+    private final String pluginId;
+    private AstraPluginStore.InstalledPlugin plugin;
+    private final List<AsplugPermission> permissions = new ArrayList<>();
+    private RecyclerListView listView;
+    private Adapter adapter;
+
+    public AstraPluginDetailsActivity(String pluginId) {
+        this.pluginId = pluginId;
+    }
+
+    @Override
+    public View createView(Context context) {
+        plugin = AstraPluginStore.find(context, pluginId);
+        if (plugin == null) {
+            finishFragment();
+            return new View(context);
+        }
+        permissions.clear();
+        permissions.addAll(plugin.manifest.permissions);
+
+        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
+        actionBar.setAllowOverlayTitle(true);
+        actionBar.setTitle(plugin.manifest.name);
+        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+            @Override
+            public void onItemClick(int id) {
+                if (id == -1) {
+                    finishFragment();
+                }
+            }
+        });
+
+        FrameLayout frame = new FrameLayout(context);
+        frame.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        fragmentView = frame;
+
+        listView = new RecyclerListView(context);
+        listView.setLayoutManager(new LinearLayoutManager(context));
+        listView.setAdapter(adapter = new Adapter(context));
+        listView.setOnItemClickListener((view, position) -> onRowClicked(context, position));
+        frame.addView(listView, LayoutHelper.createFrame(
+                LayoutHelper.MATCH_PARENT,
+                LayoutHelper.MATCH_PARENT
+        ));
+        return fragmentView;
+    }
+
+    private int permissionsStart() {
+        return 3;
+    }
+
+    private int infoRow() {
+        return permissionsStart() + permissions.size();
+    }
+
+    private void onRowClicked(Context context, int position) {
+        if (position == 1) {
+            boolean next = !AstraPluginStore.isEnabled(context, pluginId);
+            try {
+                AstraPluginStore.setEnabled(context, pluginId, next);
+                reload(context);
+            } catch (SecurityException error) {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+
+        int permissionIndex = position - permissionsStart();
+        if (permissionIndex >= 0 && permissionIndex < permissions.size()) {
+            AsplugPermission permission = permissions.get(permissionIndex);
+            boolean current = AstraPluginStore.isPermissionGranted(context, pluginId, permission);
+            AstraPluginStore.setPermissionGranted(context, pluginId, permission, !current);
+            reload(context);
+        }
+    }
+
+    private void reload(Context context) {
+        plugin = AstraPluginStore.find(context, pluginId);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private class Adapter extends RecyclerListView.SelectionAdapter {
+        private static final int TYPE_HEADER = 0;
+        private static final int TYPE_CHECK = 1;
+        private static final int TYPE_INFO = 2;
+        private final Context context;
+
+        Adapter(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public int getItemCount() {
+            return infoRow() + 1;
+        }
+
+        @Override
+        public boolean isEnabled(RecyclerView.ViewHolder holder) {
+            int position = holder.getAdapterPosition();
+            return position == 1 || (position >= permissionsStart() && position < infoRow());
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view;
+            if (viewType == TYPE_HEADER) {
+                view = new HeaderCell(context);
+            } else if (viewType == TYPE_CHECK) {
+                view = new TextCheckCell(context);
+            } else {
+                view = new TextInfoPrivacyCell(context);
+            }
+            view.setLayoutParams(new RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT,
+                    RecyclerView.LayoutParams.WRAP_CONTENT
+            ));
+            return new RecyclerListView.Holder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            if (holder.getItemViewType() == TYPE_HEADER) {
+                HeaderCell cell = (HeaderCell) holder.itemView;
+                cell.setText(position == 0 ? "Plugin" : "Permissions");
+            } else if (holder.getItemViewType() == TYPE_CHECK) {
+                TextCheckCell cell = (TextCheckCell) holder.itemView;
+                if (position == 1) {
+                    cell.setTextAndCheck(
+                            "Enabled",
+                            plugin != null && AstraPluginStore.isEnabled(context, pluginId),
+                            false
+                    );
+                } else {
+                    AsplugPermission permission = permissions.get(position - permissionsStart());
+                    cell.setTextAndCheck(
+                            permission.wireName(),
+                            AstraPluginStore.isPermissionGranted(context, pluginId, permission),
+                            position < infoRow() - 1
+                    );
+                }
+            } else {
+                TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
+                cell.setText(
+                        "AstraGram only enables this plugin after every permission requested by its manifest is granted. Revoking a permission disables the plugin."
+                );
+            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (position == 0 || position == 2) {
+                return TYPE_HEADER;
+            }
+            if (position == infoRow()) {
+                return TYPE_INFO;
+            }
+            return TYPE_CHECK;
+        }
+    }
+}
