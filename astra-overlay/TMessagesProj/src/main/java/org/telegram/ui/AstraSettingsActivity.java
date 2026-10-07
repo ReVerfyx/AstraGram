@@ -12,8 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.R;
 import org.telegram.messenger.astra.AstraSettings;
+import org.telegram.messenger.astra.ai.AstraProviderStore;
 import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.HeaderCell;
@@ -34,14 +34,18 @@ public class AstraSettingsActivity extends BaseFragment {
     private static final int ROW_ANIMATIONS = 1;
     private static final int ROW_MOTION = 2;
     private static final int ROW_APPEARANCE_INFO = 3;
+
     private static final int ROW_AUTOMATION = 4;
-    private static final int ROW_PROFILE_AUTOMATION = 5;
-    private static final int ROW_PROVIDER = 6;
-    private static final int ROW_AUTOMATION_INFO = 7;
-    private static final int ROW_EXTENSIONS = 8;
-    private static final int ROW_PLUGINS = 9;
-    private static final int ROW_EXTENSIONS_INFO = 10;
-    private static final int ROW_COUNT = 11;
+    private static final int ROW_PROFILE_STUDIO = 5;
+    private static final int ROW_PROFILE_AUTOMATION = 6;
+    private static final int ROW_PROVIDER = 7;
+    private static final int ROW_PROVIDER_CONFIG = 8;
+    private static final int ROW_AUTOMATION_INFO = 9;
+
+    private static final int ROW_EXTENSIONS = 10;
+    private static final int ROW_PLUGINS = 11;
+    private static final int ROW_EXTENSIONS_INFO = 12;
+    private static final int ROW_COUNT = 13;
 
     private RecyclerListView listView;
     private ListAdapter adapter;
@@ -79,40 +83,40 @@ public class AstraSettingsActivity extends BaseFragment {
         listView.setItemAnimator(animator);
 
         listView.setOnItemClickListener((view, position) -> onRowClicked(context, position));
-        frame.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        frame.addView(listView, LayoutHelper.createFrame(
+                LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT
+        ));
         return fragmentView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void onRowClicked(Context context, int position) {
         if (position == ROW_ANIMATIONS) {
             AstraSettings.setAnimationsEnabled(context, !AstraSettings.animationsEnabled(context));
             adapter.notifyItemChanged(ROW_ANIMATIONS);
-            return;
-        }
-        if (position == ROW_MOTION) {
+        } else if (position == ROW_MOTION) {
             float value = AstraSettings.motionScale(context);
             float next = value < 0.9f ? 1.0f : value < 1.15f ? 1.25f : 0.75f;
             AstraSettings.setMotionScale(context, next);
             adapter.notifyItemChanged(ROW_MOTION);
-            return;
-        }
-        if (position == ROW_PROFILE_AUTOMATION) {
-            AstraSettings.setProfileAutomationEnabled(context, !AstraSettings.profileAutomationEnabled(context));
+        } else if (position == ROW_PROFILE_STUDIO) {
+            presentFragment(new AstraProfileStudioActivity());
+        } else if (position == ROW_PROFILE_AUTOMATION) {
+            AstraSettings.setProfileAutomationEnabled(
+                    context,
+                    !AstraSettings.profileAutomationEnabled(context)
+            );
             adapter.notifyItemChanged(ROW_PROFILE_AUTOMATION);
-            return;
-        }
-        if (position == ROW_PROVIDER) {
-            String[] choices = {"OpenAI compatible", "Custom server"};
-            AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-            builder.setTitle("AI provider");
-            builder.setItems(choices, (dialog, which) -> {
-                AstraSettings.setAiProvider(context, which == 0 ? "openai-compatible" : "custom-server");
-                adapter.notifyItemChanged(ROW_PROVIDER);
-            });
-            showDialog(builder.create());
-            return;
-        }
-        if (position == ROW_PLUGINS) {
+        } else if (position == ROW_PROVIDER || position == ROW_PROVIDER_CONFIG) {
+            presentFragment(new AstraProviderSettingsActivity());
+        } else if (position == ROW_PLUGINS) {
             presentFragment(new AstraPluginsActivity());
         }
     }
@@ -129,7 +133,11 @@ public class AstraSettingsActivity extends BaseFragment {
     }
 
     private static String providerLabel(Context context) {
-        return "custom-server".equals(AstraSettings.aiProvider(context)) ? "Custom server" : "OpenAI compatible";
+        if (!AstraProviderStore.isConfigured(context)) {
+            return "Not configured";
+        }
+        String model = AstraProviderStore.model(context);
+        return model.isEmpty() ? "Configured" : model;
     }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
@@ -147,8 +155,9 @@ public class AstraSettingsActivity extends BaseFragment {
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int p = holder.getAdapterPosition();
-            return p == ROW_ANIMATIONS || p == ROW_MOTION || p == ROW_PROFILE_AUTOMATION
-                    || p == ROW_PROVIDER || p == ROW_PLUGINS;
+            return p == ROW_ANIMATIONS || p == ROW_MOTION || p == ROW_PROFILE_STUDIO
+                    || p == ROW_PROFILE_AUTOMATION || p == ROW_PROVIDER
+                    || p == ROW_PROVIDER_CONFIG || p == ROW_PLUGINS;
         }
 
         @NonNull
@@ -185,16 +194,28 @@ public class AstraSettingsActivity extends BaseFragment {
             } else if (holder.getItemViewType() == TYPE_CHECK) {
                 TextCheckCell cell = (TextCheckCell) holder.itemView;
                 if (position == ROW_ANIMATIONS) {
-                    cell.setTextAndCheck("Astra animations", AstraSettings.animationsEnabled(context), false);
+                    cell.setTextAndCheck(
+                            "Astra animations",
+                            AstraSettings.animationsEnabled(context),
+                            false
+                    );
                 } else {
-                    cell.setTextAndCheck("Apply profile changes automatically", AstraSettings.profileAutomationEnabled(context), false);
+                    cell.setTextAndCheck(
+                            "Apply approved changes automatically",
+                            AstraSettings.profileAutomationEnabled(context),
+                            false
+                    );
                 }
             } else if (holder.getItemViewType() == TYPE_VALUE) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
                 if (position == ROW_MOTION) {
                     cell.setTextAndValue("Motion style", motionLabel(context), false);
+                } else if (position == ROW_PROFILE_STUDIO) {
+                    cell.setTextAndValue("Profile Studio", "Do it for me", true);
                 } else if (position == ROW_PROVIDER) {
-                    cell.setTextAndValue("AI provider", providerLabel(context), false);
+                    cell.setTextAndValue("AI provider", providerLabel(context), true);
+                } else if (position == ROW_PROVIDER_CONFIG) {
+                    cell.setTextAndValue("Provider settings", "Endpoint, model, key", false);
                 } else {
                     cell.setTextAndValue("Plugins", ".asplug", false);
                 }
@@ -203,7 +224,7 @@ public class AstraSettingsActivity extends BaseFragment {
                 if (position == ROW_APPEARANCE_INFO) {
                     cell.setText("Smooth motion is enabled by default. You can reduce or disable it here.");
                 } else if (position == ROW_AUTOMATION_INFO) {
-                    cell.setText("When enabled, approved Astra automations apply changes instead of only suggesting them.");
+                    cell.setText("Profile Studio can apply generated names, bios and avatars directly after you start the action.");
                 } else {
                     cell.setText("Install and manage AstraGram extension packages.");
                 }
@@ -218,7 +239,9 @@ public class AstraSettingsActivity extends BaseFragment {
             if (position == ROW_ANIMATIONS || position == ROW_PROFILE_AUTOMATION) {
                 return TYPE_CHECK;
             }
-            if (position == ROW_APPEARANCE_INFO || position == ROW_AUTOMATION_INFO || position == ROW_EXTENSIONS_INFO) {
+            if (position == ROW_APPEARANCE_INFO
+                    || position == ROW_AUTOMATION_INFO
+                    || position == ROW_EXTENSIONS_INFO) {
                 return TYPE_INFO;
             }
             return TYPE_VALUE;
