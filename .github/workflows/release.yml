@@ -18,7 +18,6 @@ jobs:
     env:
       TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
       TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-      ANDROID_NDK_VERSION: 27.2.12479018
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
@@ -33,24 +32,37 @@ jobs:
           java-version: "17"
 
       - name: Install Android dependencies
+        shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager             "platform-tools"             "platforms;android-36"             "build-tools;36.0.0"             "ndk;27.2.12479018"             "cmake;3.22.1"
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort -V | tail -1)"
+          fi
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Prepare Telegram source
+        shell: bash
         run: |
+          set -euo pipefail
           chmod +x scripts/*.sh
           ./scripts/bootstrap-telegram.sh
           ./scripts/inject-telegram-api.sh
 
       - name: Build release
         working-directory: vendor/telegram
+        shell: bash
         run: |
+          set -euo pipefail
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace :TMessagesProj_App:assembleAfatRelease
 
       - name: Collect APK
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p artifacts
           cp vendor/telegram/TMessagesProj_App/build/outputs/apk/afat/release/app.apk artifacts/AstraGram-release.apk
           sha256sum artifacts/AstraGram-release.apk | tee artifacts/SHA256SUMS.txt
