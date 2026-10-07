@@ -164,7 +164,7 @@ public class AstraPluginDetailsActivity extends BaseFragment {
                 } else {
                     AsplugPermission permission = permissions.get(position - permissionsStart());
                     cell.setTextAndCheck(
-                            permission.wireName(),
+                            friendlyName(permission),
                             AstraPluginStore.isPermissionGranted(context, pluginId, permission),
                             position < infoRow() - 1
                     );
@@ -174,6 +174,21 @@ public class AstraPluginDetailsActivity extends BaseFragment {
                 cell.setText(
                         "AstraGram only enables this plugin after every permission requested by its manifest is granted. Revoking a permission disables the plugin."
                 );
+            }
+        }
+
+        private String friendlyName(AsplugPermission permission) {
+            switch (permission) {
+                case UI: return "Modify interface";
+                case NETWORK: return "Internet access";
+                case FILES_READ: return "Read files";
+                case FILES_WRITE: return "Write files";
+                case MESSAGES_READ: return "Read messages";
+                case MESSAGES_SEND: return "Send messages";
+                case PROFILE_READ: return "Read profile";
+                case PROFILE_WRITE: return "Change profile";
+                case AUTOMATION: return "Run automations";
+                default: return permission.wireName();
             }
         }
 
