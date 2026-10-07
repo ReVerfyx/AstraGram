@@ -4,12 +4,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
 
 jobs:
   release:
+    if: github.event_name != 'issues' || github.event.issue.title == '[ci] build release'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
