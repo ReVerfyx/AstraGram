@@ -142,6 +142,179 @@ replace_once(
     "first-run permissions reset"
 )
 
+
+# Keep the 32-account capacity without eagerly starting 32 Telegram stacks at app launch.
+# Upstream initializes every slot, which becomes extremely expensive once MAX_ACCOUNT_COUNT is raised.
+application_loader = root / "TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java"
+replace_once(
+    application_loader,
+    '''                    boolean isSlow = isConnectionSlow();
+                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+                        ConnectionsManager.getInstance(a).checkConnection();
+                        FileLoader.getInstance(a).onNetworkChanged(isSlow);
+                    }
+''',
+    '''                    boolean isSlow = isConnectionSlow();
+                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+                        UserConfig config = UserConfig.getInstance(a);
+                        if (a != UserConfig.selectedAccount && !config.isClientActivated()) {
+                            continue;
+                        }
+                        ConnectionsManager.getInstance(a).checkConnection();
+                        FileLoader.getInstance(a).onNetworkChanged(isSlow);
+                    }
+''',
+    "lazy account startup network loop"
+)
+
+replace_once(
+    application_loader,
+    '''        SharedConfig.loadConfig();
+        SharedPrefsHelper.init(applicationContext);
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
+            UserConfig.getInstance(a).loadConfig();
+            MessagesController.getInstance(a);
+            if (a == 0) {
+                SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + ConnectionsManager.getInstance(a).getCurrentTime() + "__";
+            } else {
+                ConnectionsManager.getInstance(a);
+            }
+            TLRPC.User user = UserConfig.getInstance(a).getCurrentUser();
+            if (user != null) {
+                MessagesController.getInstance(a).putUser(user, true);
+                SendMessagesHelper.getInstance(a).checkUnsentMessages();
+            }
+        }
+''',
+    '''        SharedConfig.loadConfig();
+        SharedPrefsHelper.init(applicationContext);
+
+        // Loading the small UserConfig objects is cheap and is needed to discover activated slots.
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig.getInstance(a).loadConfig();
+        }
+
+        // Heavy Telegram controllers/connections are created only for the selected or activated accounts.
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig config = UserConfig.getInstance(a);
+            if (a != UserConfig.selectedAccount && !config.isClientActivated()) {
+                continue;
+            }
+            MessagesController.getInstance(a);
+            if (a == 0) {
+                SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + ConnectionsManager.getInstance(a).getCurrentTime() + "__";
+            } else {
+                ConnectionsManager.getInstance(a);
+            }
+            TLRPC.User user = config.getCurrentUser();
+            if (user != null) {
+                MessagesController.getInstance(a).putUser(user, true);
+                SendMessagesHelper.getInstance(a).checkUnsentMessages();
+            }
+        }
+''',
+    "lazy account startup controller loop"
+)
+
+replace_once(
+    application_loader,
+    '''        MediaController.getInstance();
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
+            ContactsController.getInstance(a).checkAppAccount();
+            DownloadController.getInstance(a);
+        }
+''',
+    '''        MediaController.getInstance();
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig config = UserConfig.getInstance(a);
+            if (a != UserConfig.selectedAccount && !config.isClientActivated()) {
+                continue;
+            }
+            ContactsController.getInstance(a).checkAppAccount();
+            DownloadController.getInstance(a);
+        }
+''',
+    "lazy account startup contacts loop"
+)
+
+connections_java = root / "TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java"
+replace_once(
+    connections_java,
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            native_setLangCode(a, langCode);
+        }
+''',
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig config = UserConfig.getInstance(a);
+            if (a == UserConfig.selectedAccount || config.isClientActivated()) {
+                native_setLangCode(a, langCode);
+            }
+        }
+''',
+    "lazy account language loop"
+)
+
+replace_once(
+    connections_java,
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            native_setRegId(a, pushString);
+        }
+''',
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig config = UserConfig.getInstance(a);
+            if (a == UserConfig.selectedAccount || config.isClientActivated()) {
+                native_setRegId(a, pushString);
+            }
+        }
+''',
+    "lazy account push loop"
+)
+
+replace_once(
+    connections_java,
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            native_setSystemLangCode(a, langCode);
+        }
+''',
+    '''        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig config = UserConfig.getInstance(a);
+            if (a == UserConfig.selectedAccount || config.isClientActivated()) {
+                native_setSystemLangCode(a, langCode);
+            }
+        }
+''',
+    "lazy account system language loop"
+)
+
+tgnet_wrapper = root / "TMessagesProj/jni/TgNetWrapper.cpp"
+replace_once(
+    tgnet_wrapper,
+    '''    ConnectionsManager::getInstance(instanceNum).init((uint32_t) version, layer, apiId, std::string(deviceModelStr), std::string(systemVersionStr), std::string(appVersionStr), std::string(langCodeStr), std::string(systemLangCodeStr), std::string(configPathStr), std::string(logPathStr), std::string(regIdStr), std::string(cFingerprintStr), std::string(installerIdStr), std::string(packageIdStr), timezoneOffset, userId, userPremium, true, enablePushConnection, hasNetwork, networkType, performanceClass);
+''',
+    '''    auto &manager = ConnectionsManager::getInstance(instanceNum);
+    manager.setDelegate(new Delegate());
+    manager.init((uint32_t) version, layer, apiId, std::string(deviceModelStr), std::string(systemVersionStr), std::string(appVersionStr), std::string(langCodeStr), std::string(systemLangCodeStr), std::string(configPathStr), std::string(logPathStr), std::string(regIdStr), std::string(cFingerprintStr), std::string(installerIdStr), std::string(packageIdStr), timezoneOffset, userId, userPremium, true, enablePushConnection, hasNetwork, networkType, performanceClass);
+''',
+    "lazy native delegate init"
+)
+
+replace_once(
+    tgnet_wrapper,
+    '''void setJava(JNIEnv *env, jclass c, jboolean useJavaByteBuffers) {
+    ConnectionsManager::useJavaVM(java, useJavaByteBuffers);
+    for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
+        ConnectionsManager::getInstance(a).setDelegate(new Delegate());
+    }
+}
+''',
+    '''void setJava(JNIEnv *env, jclass c, jboolean useJavaByteBuffers) {
+    // Do not instantiate every possible account here. A delegate is attached lazily in native_init.
+    ConnectionsManager::useJavaVM(java, useJavaByteBuffers);
+}
+''',
+    "lazy native account initialization"
+)
+
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
 replace_once(
     chat_edit,

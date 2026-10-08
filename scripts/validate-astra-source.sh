@@ -84,3 +84,21 @@ if bad_astra_names:
 
 print("Astra validation OK: package, API credentials, branding and resource IDs are consistent.")
 PY
+
+
+# lazy account startup validation
+python3 - "$UPSTREAM_DIR" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+app = (root / "TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java").read_text(encoding="utf-8")
+cm = (root / "TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java").read_text(encoding="utf-8")
+jni = (root / "TMessagesProj/jni/TgNetWrapper.cpp").read_text(encoding="utf-8")
+if "Heavy Telegram controllers/connections are created only for the selected or activated accounts." not in app:
+    raise SystemExit("Astra validation: lazy ApplicationLoader account initialization is missing")
+if "a == UserConfig.selectedAccount || config.isClientActivated()" not in cm:
+    raise SystemExit("Astra validation: lazy ConnectionsManager broadcast loops are missing")
+if "manager.setDelegate(new Delegate());" not in jni or "Do not instantiate every possible account here" not in jni:
+    raise SystemExit("Astra validation: lazy native account initialization is missing")
+print("Astra lazy-account validation OK.")
+PY
