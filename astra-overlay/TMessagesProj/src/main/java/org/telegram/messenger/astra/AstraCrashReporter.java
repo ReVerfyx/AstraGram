@@ -1,7 +1,7 @@
 package org.telegram.messenger.astra;
 
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.SharedPreferences;\nimport android.os.Build;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -26,7 +26,11 @@ public final class AstraCrashReporter {
             try {
                 StringWriter writer = new StringWriter();
                 PrintWriter printer = new PrintWriter(writer);
+                printer.println("AstraGram crash report");
+                printer.println("Android " + Build.VERSION.RELEASE + " (SDK " + Build.VERSION.SDK_INT + ")");
+                printer.println("Device: " + Build.MANUFACTURER + " " + Build.MODEL);
                 printer.println("Thread: " + (thread == null ? "unknown" : thread.getName()));
+                printer.println();
                 if (throwable != null) {
                     throwable.printStackTrace(printer);
                 }

@@ -26,7 +26,7 @@ user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserCon
 replace_once(
     user_config,
     "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 3;\n    public final static int MAX_ACCOUNT_COUNT = 4;",
-    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 8;\n    public final static int MAX_ACCOUNT_COUNT = 16;",
+    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 32;\n    public final static int MAX_ACCOUNT_COUNT = 32;",
     "account capacity"
 )
 
@@ -34,7 +34,7 @@ defines = root / "TMessagesProj/jni/tgnet/Defines.h"
 replace_once(
     defines,
     "#define MAX_ACCOUNT_COUNT 5",
-    "#define MAX_ACCOUNT_COUNT 16",
+    "#define MAX_ACCOUNT_COUNT 32",
     "native account capacity"
 )
 
@@ -54,6 +54,8 @@ replace_once(
 ''',
     '''    @Override
     public View createView(Context context) {
+        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
+        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
         titles[0] = LocaleController.getString(R.string.AppName);
 
         actionBar.setAddToContainer(false);
@@ -82,22 +84,6 @@ replace_once(
         super.onCreate();
 ''',
     "early crash reporter"
-)
-
-intro = root / "TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java"
-replace_once(
-    intro,
-    '''        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
-        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
-        SpannableStringBuilder ssb = new SpannableStringBuilder(LocaleController.getString(R.string.Page1Title));
-        ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        titles[0] = ssb;
-''',
-    '''        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
-        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
-        titles[0] = LocaleController.getString(R.string.Page1Title);
-''',
-    "AstraGram intro title"
 )
 
 replace_once(
