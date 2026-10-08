@@ -19,29 +19,37 @@ import re
 import sys
 
 res = Path(sys.argv[1])
+
+def replace_visible_text(xml: str) -> str:
+    # Only touch element bodies. Never replace inside resource names/attributes:
+    # Java references such as R.string.TelegramVersion must keep their original IDs.
+    pattern = re.compile(r'(<(?:string|item)\b[^>]*>)(.*?)(</(?:string|item)>)', re.S)
+
+    def repl(match):
+        body = match.group(2).replace("Telegram", "AstraGram")
+        return match.group(1) + body + match.group(3)
+
+    return pattern.sub(repl, xml)
+
 for path in res.glob("values*/strings.xml"):
     text = path.read_text(encoding="utf-8")
 
-    # App label in every bundled locale.
     text = re.sub(
-        r'<string name="AppName">.*?</string>',
-        '<string name="AppName">AstraGram</string>',
+        r'(<string\s+name="AppName"[^>]*>).*?(</string>)',
+        r'\1AstraGram\2',
         text,
         count=1,
         flags=re.S,
     )
     text = re.sub(
-        r'<string name="AppNameBeta">.*?</string>',
-        '<string name="AppNameBeta">AstraGram Beta</string>',
+        r'(<string\s+name="AppNameBeta"[^>]*>).*?(</string>)',
+        r'\1AstraGram Beta\2',
         text,
         count=1,
         flags=re.S,
     )
 
-    # Rebrand user-visible Telegram wording without touching Java package names,
-    # deep-link schemes or lower-case telegram.org URLs.
-    text = text.replace("Telegram", "AstraGram")
-
+    text = replace_visible_text(text)
     path.write_text(text, encoding="utf-8")
 PY
 
