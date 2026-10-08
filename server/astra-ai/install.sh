@@ -59,13 +59,24 @@ ln -sf /etc/nginx/sites-available/astragram-ai /etc/nginx/sites-enabled/astragra
 nginx -t
 systemctl restart nginx
 
-/opt/astragram-certbot/bin/certbot certonly   --preferred-profile shortlived   --webroot   --webroot-path /var/www/letsencrypt   --ip-address "$SERVER_IP"   --non-interactive   --agree-tos   --register-unsafely-without-email
+if [ ! -s "/etc/letsencrypt/live/$SERVER_IP/fullchain.pem" ] || [ ! -s "/etc/letsencrypt/live/$SERVER_IP/privkey.pem" ]; then
+  /opt/astragram-certbot/bin/certbot certonly \
+    --preferred-profile shortlived \
+    --webroot \
+    --webroot-path /var/www/letsencrypt \
+    --ip-address "$SERVER_IP" \
+    --non-interactive \
+    --agree-tos \
+    --register-unsafely-without-email
+else
+  echo "TLS certificate for $SERVER_IP already exists; reusing it."
+fi
 
 cat >/etc/nginx/conf.d/astragram-rate.conf <<'EOF'
 limit_req_zone $binary_remote_addr zone=astragram_ai:10m rate=2r/s;
 EOF
 
-cat >/etc/nginx/sites-available/astragram-ai <<EOF
+cat >/etc/nginx/sites-available/astragram-ai <<'EOF'
 server {
     listen 80 default_server;
     server_name _;
@@ -81,15 +92,15 @@ server {
     listen 443 ssl default_server;
     server_name _;
 
-    ssl_certificate /etc/letsencrypt/live/$SERVER_IP/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$SERVER_IP/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/__SERVER_IP__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__SERVER_IP__/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     client_max_body_size 1m;
 
     location = /ai/health {
         default_type application/json;
-        return 200 '{"ok":true,"model":"$MODEL"}';
+        return 200 '{"ok":true,"model":"__MODEL__"}';
     }
 
     location = /ai/v1/chat/completions {
@@ -107,6 +118,11 @@ server {
     }
 }
 EOF
+
+sed -i \
+  -e "s|__SERVER_IP__|$SERVER_IP|g" \
+  -e "s|__MODEL__|$MODEL|g" \
+  /etc/nginx/sites-available/astragram-ai
 
 nginx -t
 systemctl restart nginx
