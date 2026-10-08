@@ -26,7 +26,7 @@ user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserCon
 replace_once(
     user_config,
     "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 3;\n    public final static int MAX_ACCOUNT_COUNT = 4;",
-    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 32;\n    public final static int MAX_ACCOUNT_COUNT = 32;",
+    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 8;\n    public final static int MAX_ACCOUNT_COUNT = 16;",
     "account capacity"
 )
 
@@ -34,8 +34,54 @@ defines = root / "TMessagesProj/jni/tgnet/Defines.h"
 replace_once(
     defines,
     "#define MAX_ACCOUNT_COUNT 5",
-    "#define MAX_ACCOUNT_COUNT 32",
+    "#define MAX_ACCOUNT_COUNT 16",
     "native account capacity"
+)
+
+intro = root / "TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java"
+replace_once(
+    intro,
+    '''    @Override
+    public View createView(Context context) {
+        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
+        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
+        SpannableStringBuilder ssb = new SpannableStringBuilder(LocaleController.getString(R.string.Page1Title));
+        ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        titles[0] = ssb;
+
+
+        actionBar.setAddToContainer(false);
+''',
+    '''    @Override
+    public View createView(Context context) {
+        titles[0] = LocaleController.getString(R.string.AppName);
+
+        actionBar.setAddToContainer(false);
+''',
+    "intro branding"
+)
+
+application_loader = root / "TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java"
+replace_once(
+    application_loader,
+    '''        try {
+            applicationContext = getApplicationContext();
+        } catch (Throwable ignore) {
+
+        }
+
+        super.onCreate();
+''',
+    '''        try {
+            applicationContext = getApplicationContext();
+        } catch (Throwable ignore) {
+
+        }
+
+        org.telegram.messenger.astra.AstraCrashReporter.install(applicationContext);
+        super.onCreate();
+''',
+    "early crash reporter"
 )
 
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"

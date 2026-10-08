@@ -17,6 +17,20 @@ m = re.search(r"^APP_PACKAGE=(.+)$", gradle, re.M)
 if not m or m.group(1).strip() != "com.reverfyx.astragram":
     raise SystemExit("Astra validation: APP_PACKAGE is not com.reverfyx.astragram")
 
+user_config = (root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java").read_text(encoding="utf-8")
+if "MAX_ACCOUNT_DEFAULT_COUNT = 8;" not in user_config or "MAX_ACCOUNT_COUNT = 16;" not in user_config:
+    raise SystemExit("Astra validation: account capacity must be 8 default / 16 max")
+
+defines = (root / "TMessagesProj/jni/tgnet/Defines.h").read_text(encoding="utf-8")
+if "#define MAX_ACCOUNT_COUNT 16" not in defines:
+    raise SystemExit("Astra validation: native account capacity must be 16")
+
+intro = (root / "TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java").read_text(encoding="utf-8")
+if "R.drawable.telegram_logo" in intro:
+    raise SystemExit("Astra validation: Telegram wordmark is still used on the intro screen")
+if 'titles[0] = LocaleController.getString(R.string.AppName);' not in intro:
+    raise SystemExit("Astra validation: AstraGram AppName is not used on the intro screen")
+
 build_vars_path = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
 build_vars = build_vars_path.read_text(encoding="utf-8")
 m_id = re.search(r"public static int APP_ID = (\d+);", build_vars)
