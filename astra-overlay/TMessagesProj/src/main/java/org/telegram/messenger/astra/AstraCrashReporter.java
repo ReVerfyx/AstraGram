@@ -1,7 +1,8 @@
 package org.telegram.messenger.astra;
 
 import android.content.Context;
-import android.content.SharedPreferences;\nimport android.os.Build;
+import android.content.SharedPreferences;
+import android.os.Build;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
