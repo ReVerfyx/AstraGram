@@ -32,6 +32,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Check release secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$TELEGRAM_API_ID" || { echo "Missing TELEGRAM_API_ID" >&2; exit 1; }
+          test -n "$TELEGRAM_API_HASH" || { echo "Missing TELEGRAM_API_HASH" >&2; exit 1; }
+          test -n "$GOOGLE_SERVICES_JSON_BASE64" || { echo "Missing GOOGLE_SERVICES_JSON_BASE64" >&2; exit 1; }
+
       - name: Install Android dependencies
         shell: bash
         run: |

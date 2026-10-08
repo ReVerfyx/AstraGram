@@ -10,8 +10,8 @@ if [[ ! -f "${TARGET}" ]]; then
 fi
 
 if [[ -z "${TELEGRAM_API_ID:-}" || -z "${TELEGRAM_API_HASH:-}" ]]; then
-  echo "Telegram API secrets are not set; keeping upstream dummy credentials for compile verification."
-  exit 0
+  echo "TELEGRAM_API_ID and TELEGRAM_API_HASH are required for AstraGram release builds." >&2
+  exit 1
 fi
 
 if [[ ! "${TELEGRAM_API_ID}" =~ ^[0-9]+$ ]]; then
