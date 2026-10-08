@@ -31,6 +31,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
       - name: Check release secrets
         shell: bash
@@ -64,6 +65,15 @@ jobs:
             exit 1
           fi
           printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > vendor/telegram/TMessagesProj_App/google-services.json
+          ./scripts/validate-astra-source.sh
+
+      - name: Fast Java compile check
+        working-directory: vendor/telegram
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :TMessagesProj:compileReleaseJavaWithJavac
 
       - name: Build release
         working-directory: vendor/telegram
