@@ -9,6 +9,9 @@ public final class AstraProviderStore {
     private static final String KEY_MODEL = "model";
     private static final String KEY_API_KEY = "api_key";
 
+    public static final String BUILTIN_ENDPOINT = "https://2.26.85.86/ai/v1/chat/completions";
+    public static final String BUILTIN_MODEL = "qwen2.5:3b";
+
     private AstraProviderStore() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -16,23 +19,45 @@ public final class AstraProviderStore {
     }
 
     public static String endpoint(Context context) {
-        return prefs(context).getString(KEY_ENDPOINT, "");
+        String value = clean(prefs(context).getString(KEY_ENDPOINT, ""));
+        return value.isEmpty() ? BUILTIN_ENDPOINT : value;
     }
 
     public static String model(Context context) {
-        return prefs(context).getString(KEY_MODEL, "");
+        String value = clean(prefs(context).getString(KEY_MODEL, ""));
+        return value.isEmpty() ? BUILTIN_MODEL : value;
     }
 
     public static String apiKey(Context context) {
-        return prefs(context).getString(KEY_API_KEY, "");
+        return clean(prefs(context).getString(KEY_API_KEY, ""));
     }
 
     public static void save(Context context, String endpoint, String model, String apiKey) {
-        prefs(context).edit()
-                .putString(KEY_ENDPOINT, clean(endpoint))
-                .putString(KEY_MODEL, clean(model))
+        String cleanEndpoint = clean(endpoint);
+        String cleanModel = clean(model);
+        SharedPreferences.Editor editor = prefs(context).edit();
+        if (cleanEndpoint.isEmpty() && cleanModel.isEmpty()) {
+            editor.remove(KEY_ENDPOINT).remove(KEY_MODEL).remove(KEY_API_KEY).apply();
+            return;
+        }
+        editor.putString(KEY_ENDPOINT, cleanEndpoint)
+                .putString(KEY_MODEL, cleanModel)
                 .putString(KEY_API_KEY, clean(apiKey))
                 .apply();
+    }
+
+    public static void useBuiltIn(Context context) {
+        prefs(context).edit()
+                .remove(KEY_ENDPOINT)
+                .remove(KEY_MODEL)
+                .remove(KEY_API_KEY)
+                .apply();
+    }
+
+    public static boolean isBuiltIn(Context context) {
+        return BUILTIN_ENDPOINT.equals(endpoint(context))
+                && BUILTIN_MODEL.equals(model(context))
+                && apiKey(context).isEmpty();
     }
 
     public static boolean isConfigured(Context context) {
@@ -40,13 +65,14 @@ public final class AstraProviderStore {
     }
 
     public static AstraAiProvider create(Context context) {
+        boolean builtIn = isBuiltIn(context);
         return new OpenAiCompatibleProvider(
-                "openai-compatible",
-                "OpenAI compatible",
+                builtIn ? "astragram-local" : "openai-compatible",
+                builtIn ? "Astra AI" : "OpenAI compatible",
                 endpoint(context),
                 model(context),
                 apiKey(context),
-                new HttpJsonTransport()
+                new HttpJsonTransport(15000, 120000)
         );
     }
 

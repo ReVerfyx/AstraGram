@@ -38,6 +38,33 @@ replace_once(
     "native account capacity"
 )
 
+chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
+replace_once(
+    chat_edit,
+    '''        settingsContainer = new LinearLayout(context);
+        settingsContainer.setOrientation(LinearLayout.VERTICAL);
+        linearLayout1.addView(settingsContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        if (currentUser != null || ChatObject.canChangeChatInfo(currentChat)) {
+''',
+    '''        settingsContainer = new LinearLayout(context);
+        settingsContainer.setOrientation(LinearLayout.VERTICAL);
+        linearLayout1.addView(settingsContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        if (currentChat != null && ChatObject.isChannelAndNotMegaGroup(currentChat) && ChatObject.canChangeChatInfo(currentChat)) {
+            TextCell astraAiCell = new TextCell(context);
+            astraAiCell.setBackgroundDrawable(Theme.getSelectorDrawable(false));
+            astraAiCell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlueButton);
+            astraAiCell.setTextAndIcon("AI settings", R.drawable.msg_bot, true);
+            astraAiCell.setOnClickListener(v -> presentFragment(new AstraChannelAiSettingsActivity(chatId)));
+            settingsContainer.addView(astraAiCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        }
+
+        if (currentUser != null || ChatObject.canChangeChatInfo(currentChat)) {
+''',
+    "channel AI settings row"
+)
+
 settings = root / "TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java"
 replace_once(
     settings,

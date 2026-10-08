@@ -53,7 +53,7 @@ public class AstraProviderSettingsActivity extends BaseFragment {
         fragmentView = root;
 
         TextView intro = new TextView(context);
-        intro.setText("Connect any OpenAI-compatible endpoint. AstraGram keeps the provider separate from the automation engine.");
+        intro.setText("Astra AI uses your local Qwen server by default. You can override it with another OpenAI-compatible endpoint here.");
         intro.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         intro.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         intro.setGravity(Gravity.START);
@@ -82,7 +82,7 @@ public class AstraProviderSettingsActivity extends BaseFragment {
         ));
 
         TextView note = new TextView(context);
-        note.setText("The API key is stored in AstraGram's private app storage. Use a restricted key whenever your provider supports it.");
+        note.setText("The built-in Astra AI needs no API key. A key is only used when you override the provider with one that requires it.");
         note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
         root.addView(note, LayoutHelper.createLinear(
