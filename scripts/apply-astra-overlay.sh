@@ -84,6 +84,78 @@ replace_once(
     "early crash reporter"
 )
 
+intro = root / "TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java"
+replace_once(
+    intro,
+    '''        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
+        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
+        SpannableStringBuilder ssb = new SpannableStringBuilder(LocaleController.getString(R.string.Page1Title));
+        ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        titles[0] = ssb;
+''',
+    '''        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
+        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
+        titles[0] = LocaleController.getString(R.string.Page1Title);
+''',
+    "AstraGram intro title"
+)
+
+replace_once(
+    intro,
+    '''        fragmentView = scrollView;
+
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.suggestedLangpack);
+''',
+    '''        fragmentView = scrollView;
+
+        String astraLastCrash = org.telegram.messenger.astra.AstraCrashReporter.consumeLastCrash(context);
+        if (astraLastCrash != null && !astraLastCrash.isEmpty()) {
+            final String crashText = astraLastCrash.length() > 7000 ? astraLastCrash.substring(0, 7000) : astraLastCrash;
+            AndroidUtilities.runOnUIThread(() -> {
+                if (getParentActivity() == null) {
+                    return;
+                }
+                new AlertDialog.Builder(getParentActivity())
+                        .setTitle("AstraGram crash report")
+                        .setMessage(crashText)
+                        .setPositiveButton("OK", null)
+                        .show();
+            }, 350);
+        }
+
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.suggestedLangpack);
+''',
+    "Astra crash report on intro"
+)
+
+login = root / "TMessagesProj/src/main/java/org/telegram/ui/LoginActivity.java"
+replace_once(
+    login,
+    '''    private boolean checkPermissions = true;
+    private boolean checkShowPermissions = true;
+''',
+    '''    // AstraGram does not need phone/call-log access for manual login.
+    // Keeping these off also avoids fragile permission flows on newer Android versions.
+    private boolean checkPermissions = false;
+    private boolean checkShowPermissions = false;
+''',
+    "first-run permissions defaults"
+)
+replace_once(
+    login,
+    '''            if (page == VIEW_PHONE_INPUT) {
+                checkPermissions = true;
+                checkShowPermissions = true;
+            }
+''',
+    '''            if (page == VIEW_PHONE_INPUT) {
+                checkPermissions = false;
+                checkShowPermissions = false;
+            }
+''',
+    "first-run permissions reset"
+)
+
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
 replace_once(
     chat_edit,

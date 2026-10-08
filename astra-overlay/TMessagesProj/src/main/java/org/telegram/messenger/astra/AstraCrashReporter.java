@@ -1,23 +1,17 @@
 package org.telegram.messenger.astra;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
-import android.provider.MediaStore;
+import android.content.SharedPreferences;
 
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 
 public final class AstraCrashReporter {
+    private static final String PREFS = "astragram_crash_reporter";
+    private static final String KEY_LAST_CRASH = "last_crash";
     private static volatile boolean installed;
 
-    private AstraCrashReporter() {
-    }
+    private AstraCrashReporter() {}
 
     public static synchronized void install(Context context) {
         if (installed || context == null) {
@@ -25,72 +19,49 @@ public final class AstraCrashReporter {
         }
         installed = true;
 
-        Context appContext = context.getApplicationContext();
-        Thread.UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
+        final Context appContext = context.getApplicationContext();
+        final Thread.UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
 
-        Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             try {
-                String trace = stackTrace(thread, error);
-                appContext.getSharedPreferences("astragram_diagnostics", Context.MODE_PRIVATE)
+                StringWriter writer = new StringWriter();
+                PrintWriter printer = new PrintWriter(writer);
+                printer.println("Thread: " + (thread == null ? "unknown" : thread.getName()));
+                if (throwable != null) {
+                    throwable.printStackTrace(printer);
+                }
+                printer.flush();
+
+                String crash = writer.toString();
+                if (crash.length() > 30000) {
+                    crash = crash.substring(0, 30000);
+                }
+
+                appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                         .edit()
-                        .putString("last_crash", trace)
+                        .putString(KEY_LAST_CRASH, crash)
                         .commit();
-                writeDownloadCopy(appContext, trace);
             } catch (Throwable ignored) {
             }
 
             if (previous != null) {
-                previous.uncaughtException(thread, error);
+                previous.uncaughtException(thread, throwable);
+            } else {
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(10);
             }
         });
     }
 
-    private static String stackTrace(Thread thread, Throwable error) {
-        StringWriter writer = new StringWriter();
-        PrintWriter printer = new PrintWriter(writer);
-        printer.println("AstraGram crash report");
-        printer.println("Android " + Build.VERSION.RELEASE + " (SDK " + Build.VERSION.SDK_INT + ")");
-        printer.println("Device: " + Build.MANUFACTURER + " " + Build.MODEL);
-        printer.println("Thread: " + (thread == null ? "unknown" : thread.getName()));
-        printer.println();
-        if (error != null) {
-            error.printStackTrace(printer);
+    public static String consumeLastCrash(Context context) {
+        if (context == null) {
+            return null;
         }
-        printer.flush();
-        return writer.toString();
-    }
-
-    private static void writeDownloadCopy(Context context, String trace) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return;
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String value = preferences.getString(KEY_LAST_CRASH, null);
+        if (value != null) {
+            preferences.edit().remove(KEY_LAST_CRASH).apply();
         }
-
-        ContentResolver resolver = context.getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Downloads.DISPLAY_NAME, "AstraGram-last-crash.txt");
-        values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
-        values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/AstraGram");
-        values.put(MediaStore.Downloads.IS_PENDING, 1);
-
-        Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-        if (uri == null) {
-            return;
-        }
-
-        try (OutputStream stream = resolver.openOutputStream(uri, "w")) {
-            if (stream == null) {
-                resolver.delete(uri, null, null);
-                return;
-            }
-            stream.write(trace.getBytes(StandardCharsets.UTF_8));
-            stream.flush();
-        } catch (Throwable error) {
-            resolver.delete(uri, null, null);
-            return;
-        }
-
-        ContentValues complete = new ContentValues();
-        complete.put(MediaStore.Downloads.IS_PENDING, 0);
-        resolver.update(uri, complete, null, null);
+        return value;
     }
 }
