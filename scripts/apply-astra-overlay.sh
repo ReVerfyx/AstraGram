@@ -706,7 +706,7 @@ replace_between(
         final String finalInstruction = instruction;
         Utilities.globalQueue.postRunnable(() -> {
             try {
-                String result = AstraTextGenerator.generate(getContext().getApplicationContext(), systemPrompt, finalInstruction + "\n\nTEXT:\n" + source);
+                String result = AstraTextGenerator.generate(getContext().getApplicationContext(), systemPrompt, finalInstruction + "\\n\\nTEXT:\\n" + source);
                 AndroidUtilities.runOnUIThread(() -> {
                     loading = false;
                     actionBarTitleTextView.setRightDrawable(null);

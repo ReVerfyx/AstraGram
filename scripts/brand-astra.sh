@@ -416,7 +416,7 @@ for path in res.glob("values*/strings.xml"):
 
     translations = ASTRA_TRANSLATIONS.get(path.parent.name, ASTRA_TRANSLATIONS["values"])
     for key, value in translations.items():
-        escaped = (value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+        escaped = (value.replace("\\", "\\\\").replace("'", "\\'").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
         pattern = re.compile(r'<string\\s+name="' + re.escape(key) + r'"[^>]*>.*?</string>', re.S)
         item = f'<string name="{key}">{escaped}</string>'
         if pattern.search(text):
