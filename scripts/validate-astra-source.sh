@@ -18,12 +18,12 @@ if not m or m.group(1).strip() != "com.reverfyx.astragram":
     raise SystemExit("Astra validation: APP_PACKAGE is not com.reverfyx.astragram")
 
 user_config = (root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java").read_text(encoding="utf-8")
-if "MAX_ACCOUNT_DEFAULT_COUNT = 32;" not in user_config or "MAX_ACCOUNT_COUNT = 32;" not in user_config:
-    raise SystemExit("Astra validation: account capacity must be 32 default / 32 max")
+if "MAX_ACCOUNT_DEFAULT_COUNT = 3;" not in user_config or "MAX_ACCOUNT_COUNT = 4;" not in user_config:
+    raise SystemExit("Astra validation: startup-safe build must use upstream 3 default / 4 max account bounds")
 
 defines = (root / "TMessagesProj/jni/tgnet/Defines.h").read_text(encoding="utf-8")
-if "#define MAX_ACCOUNT_COUNT 32" not in defines:
-    raise SystemExit("Astra validation: native account capacity must be 32")
+if "#define MAX_ACCOUNT_COUNT 5" not in defines:
+    raise SystemExit("Astra validation: startup-safe build must use upstream native account capacity 5")
 
 intro = (root / "TMessagesProj/src/main/java/org/telegram/ui/IntroActivity.java").read_text(encoding="utf-8")
 if 'titles[0] = LocaleController.getString(R.string.AppName);' not in intro:
@@ -32,6 +32,8 @@ if "new ImageSpan(logoDrawable)" in intro or "titles[0] = ssb;" in intro:
     raise SystemExit("Astra validation: Telegram wordmark ImageSpan is still used on the intro screen")
 if "logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();" not in intro:
     raise SystemExit("Astra validation: intro theme drawable must stay initialized to avoid a startup NPE")
+if "TextureView textureView = new TextureView(context);" in intro or "Intro.setScrollOffset(offset);" in intro:
+    raise SystemExit("Astra validation: native intro renderer is still active")
 
 build_vars_path = root / "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
 build_vars = build_vars_path.read_text(encoding="utf-8")

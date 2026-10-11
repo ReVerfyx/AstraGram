@@ -22,11 +22,21 @@ def replace_once(path, old, new, label):
         raise SystemExit(f"{label}: expected exactly one match in {path}, found {count}")
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
+def replace_between(path, start, end, replacement, label):
+    text = path.read_text(encoding="utf-8")
+    i = text.find(start)
+    if i < 0:
+        raise SystemExit(f"{label}: start marker not found in {path}")
+    j = text.find(end, i + len(start))
+    if j < 0:
+        raise SystemExit(f"{label}: end marker not found in {path}")
+    path.write_text(text[:i] + replacement + text[j:], encoding="utf-8")
+
 user_config = root / "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java"
 replace_once(
     user_config,
     "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 3;\n    public final static int MAX_ACCOUNT_COUNT = 4;",
-    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 32;\n    public final static int MAX_ACCOUNT_COUNT = 32;",
+    "    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 3;\n    public final static int MAX_ACCOUNT_COUNT = 4;",
     "account capacity"
 )
 
@@ -34,7 +44,7 @@ defines = root / "TMessagesProj/jni/tgnet/Defines.h"
 replace_once(
     defines,
     "#define MAX_ACCOUNT_COUNT 5",
-    "#define MAX_ACCOUNT_COUNT 32",
+    "#define MAX_ACCOUNT_COUNT 5",
     "native account capacity"
 )
 
@@ -61,6 +71,36 @@ replace_once(
         actionBar.setAddToContainer(false);
 ''',
     "intro branding"
+)
+
+# AstraGram startup should not depend on Telegram's native EGL intro renderer.
+# Keep the pager/text UI, but remove the TextureView + JNI animation path until
+# startup is proven stable on real devices.
+replace_between(
+    intro,
+    '''        TextureView textureView = new TextureView(context);
+''',
+    '''        viewPager = new ViewPager(context);
+''',
+    '''        // AstraGram: native EGL intro animation disabled for stable startup.
+''',
+    "disable native EGL intro"
+)
+replace_once(
+    intro,
+    '''                Intro.setScrollOffset(offset);
+''',
+    '''                // AstraGram: native intro renderer disabled.
+''',
+    "disable native intro scroll"
+)
+replace_once(
+    intro,
+    '''        } else Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+''',
+    '''        }
+''',
+    "disable native intro background update"
 )
 
 application_loader = root / "TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java"
