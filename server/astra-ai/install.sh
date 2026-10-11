@@ -152,6 +152,21 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now astragram-cert-renew.timer
+systemctl enable --now nginx
+systemctl restart ollama nginx
+
+if command -v ufw >/dev/null 2>&1; then
+  ufw allow 80/tcp >/dev/null 2>&1 || true
+  ufw allow 443/tcp >/dev/null 2>&1 || true
+fi
+
+echo
+echo "AstraGram local health checks"
+curl -fsS http://127.0.0.1:11434/api/tags >/dev/null && echo "  Ollama: OK" || echo "  Ollama: FAIL"
+curl -kfsS "https://127.0.0.1/ai/health" -H "Host: $SERVER_IP" || true
+echo
+echo "Listening ports:"
+ss -lntp | grep -E ':(80|443|11434)\\b' || true
 
 echo
 echo "Astra AI is ready:"

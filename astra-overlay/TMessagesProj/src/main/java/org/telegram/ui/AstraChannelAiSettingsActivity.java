@@ -57,7 +57,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle("AI settings");
+        actionBar.setTitle(org.telegram.messenger.LocaleController.getString(R.string.AstraAISettings));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -82,7 +82,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
         enabled = AstraChannelAiStore.enabled(context, currentAccount, chatId);
         enabledCell = new TextCheckCell(context);
         enabledCell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        enabledCell.setTextAndCheck("AI manages this channel", enabled, false);
+        enabledCell.setTextAndCheck(org.telegram.messenger.LocaleController.getString(R.string.AstraAIManagesChannel), enabled, false);
         enabledCell.setOnClickListener(v -> {
             if (running) return;
             enabled = !enabled;
@@ -93,7 +93,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
         ));
 
         TextView hint = new TextView(context);
-        hint.setText("Describe the channel in ordinary words. Astra AI will create seven different posts and schedule them in Telegram, so they can publish even when your phone is offline.");
+        hint.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraChannelHint));
         hint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         hint.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
         hint.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(12),
@@ -103,7 +103,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
         ));
 
         instructionField = new EditTextBoldCursor(context);
-        instructionField.setHint("For example: every evening post short gaming news, friendly style, no clickbait...");
+        instructionField.setHint(org.telegram.messenger.LocaleController.getString(R.string.AstraChannelInstructionHint));
         instructionField.setText(AstraChannelAiStore.instruction(context, currentAccount, chatId));
         instructionField.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         instructionField.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
@@ -142,7 +142,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
         ));
 
         scheduleButton = new TextView(context);
-        scheduleButton.setText("Generate and schedule 7 posts");
+        scheduleButton.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraGenerateSchedule7));
         scheduleButton.setGravity(Gravity.CENTER);
         scheduleButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         scheduleButton.setTypeface(AndroidUtilities.bold());

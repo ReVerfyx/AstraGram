@@ -211,9 +211,9 @@ public class AstraSettingsActivity extends BaseFragment {
                 if (position == ROW_MOTION) {
                     cell.setTextAndValue("Motion style", motionLabel(context), false);
                 } else if (position == ROW_PROFILE_STUDIO) {
-                    cell.setTextAndValue("Profile Studio", "Do it for me", true);
+                    cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraProfileStudio), org.telegram.messenger.LocaleController.getString(R.string.AstraDoIt), true);
                 } else if (position == ROW_PROVIDER) {
-                    cell.setTextAndValue("AI provider", providerLabel(context), true);
+                    cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraAIProvider), providerLabel(context), true);
                 } else if (position == ROW_PROVIDER_CONFIG) {
                     cell.setTextAndValue("Provider settings", "Endpoint, model, key", false);
                 } else {

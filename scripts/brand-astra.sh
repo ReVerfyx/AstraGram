@@ -20,6 +20,229 @@ import sys
 
 res = Path(sys.argv[1])
 
+ASTRA_TRANSLATIONS = {
+    "values": {
+        "AstraSettingsSummary": "AI, automation, plugins and appearance",
+        "AstraAIProvider": "AI provider",
+        "AstraProviderIntro": "Astra AI uses your local Qwen server by default. You can override it with another OpenAI-compatible endpoint here.",
+        "AstraEndpointUrl": "Endpoint URL",
+        "AstraModel": "Model",
+        "AstraApiKeyOptional": "API key (optional)",
+        "AstraProviderNote": "The built-in Astra AI needs no API key. A key is only used when you override the provider with one that requires it.",
+        "AstraProfileStudio": "Profile Studio",
+        "AstraProfileTitle": "Tell AstraGram what your profile should feel like.",
+        "AstraProfileSubtitle": "AstraGram will generate the profile and apply the name, bio and avatar for you.",
+        "AstraProfileHint": "For example: dark cyber style, short bio, clean nickname...",
+        "AstraDoIt": "Do it",
+        "AstraAnotherAvatar": "Use another avatar",
+        "AstraAISettings": "AI settings",
+        "AstraAIManagesChannel": "AI manages this channel",
+        "AstraChannelHint": "Describe the channel in ordinary words. Astra AI will create seven different posts and schedule them in Telegram, so they can publish even when your phone is offline.",
+        "AstraChannelInstructionHint": "For example: every evening post short gaming news, friendly style, no clickbait...",
+        "AstraGenerateSchedule7": "Generate and schedule 7 posts",
+        "AstraAutoProxySearch": "Automatic MTProto proxy search",
+        "AstraAutoProxyInfo": "If the current MTProto proxy cannot connect, AstraGram downloads fresh public candidates, checks them with Telegram, and switches to a working proxy automatically."
+    },
+    "values-ru": {
+        "AstraSettingsSummary": "ИИ, автоматизация, плагины и оформление",
+        "AstraAIProvider": "Провайдер ИИ",
+        "AstraProviderIntro": "По умолчанию Astra AI использует ваш локальный сервер Qwen. Здесь можно указать другой OpenAI-совместимый сервер.",
+        "AstraEndpointUrl": "Адрес сервера",
+        "AstraModel": "Модель",
+        "AstraApiKeyOptional": "API-ключ (необязательно)",
+        "AstraProviderNote": "Для встроенного Astra AI API-ключ не нужен. Ключ используется только для стороннего провайдера, если он его требует.",
+        "AstraProfileStudio": "Студия профиля",
+        "AstraProfileTitle": "Опишите, каким должен быть ваш профиль.",
+        "AstraProfileSubtitle": "AstraGram создаст профиль и применит имя, описание и аватар.",
+        "AstraProfileHint": "Например: тёмный кибер-стиль, короткое описание, аккуратный ник...",
+        "AstraDoIt": "Сделать",
+        "AstraAnotherAvatar": "Другой аватар",
+        "AstraAISettings": "Настройки ИИ",
+        "AstraAIManagesChannel": "ИИ управляет этим каналом",
+        "AstraChannelHint": "Опишите канал обычными словами. Astra AI создаст семь разных постов и запланирует их в Telegram, чтобы они публиковались даже когда телефон офлайн.",
+        "AstraChannelInstructionHint": "Например: каждый вечер короткие игровые новости, дружелюбный стиль, без кликбейта...",
+        "AstraGenerateSchedule7": "Создать и запланировать 7 постов",
+        "AstraAutoProxySearch": "Автопоиск MTProto-прокси",
+        "AstraAutoProxyInfo": "Если текущий MTProto-прокси не подключается, AstraGram найдёт свежие публичные прокси, проверит их через Telegram и автоматически переключится на рабочий."
+    },
+    "values-uk": {
+        "AstraSettingsSummary": "ШІ, автоматизація, плагіни та вигляд",
+        "AstraAIProvider": "Провайдер ШІ",
+        "AstraProviderIntro": "Типово Astra AI використовує ваш локальний сервер Qwen. Тут можна вказати інший OpenAI-сумісний сервер.",
+        "AstraEndpointUrl": "Адреса сервера",
+        "AstraModel": "Модель",
+        "AstraApiKeyOptional": "API-ключ (необов’язково)",
+        "AstraProviderNote": "Для вбудованого Astra AI API-ключ не потрібен. Ключ використовується лише для стороннього провайдера, якщо він його вимагає.",
+        "AstraProfileStudio": "Студія профілю",
+        "AstraProfileTitle": "Опишіть, яким має бути ваш профіль.",
+        "AstraProfileSubtitle": "AstraGram створить профіль і застосує ім’я, опис та аватар.",
+        "AstraProfileHint": "Наприклад: темний кібер-стиль, короткий опис, охайний нік...",
+        "AstraDoIt": "Зробити",
+        "AstraAnotherAvatar": "Інший аватар",
+        "AstraAISettings": "Налаштування ШІ",
+        "AstraAIManagesChannel": "ШІ керує цим каналом",
+        "AstraChannelHint": "Опишіть канал звичайними словами. Astra AI створить сім різних дописів і запланує їх у Telegram.",
+        "AstraChannelInstructionHint": "Наприклад: щовечора короткі ігрові новини, дружній стиль, без клікбейту...",
+        "AstraGenerateSchedule7": "Створити й запланувати 7 дописів",
+        "AstraAutoProxySearch": "Автопошук MTProto-проксі",
+        "AstraAutoProxyInfo": "Якщо поточний MTProto-проксі не підключається, AstraGram знайде свіжі публічні проксі, перевірить їх і автоматично перемкнеться."
+    },
+    "values-de": {
+        "AstraSettingsSummary": "KI, Automatisierung, Plugins und Darstellung",
+        "AstraAIProvider": "KI-Anbieter",
+        "AstraProviderIntro": "Astra AI verwendet standardmäßig deinen lokalen Qwen-Server. Hier kannst du einen anderen OpenAI-kompatiblen Endpunkt angeben.",
+        "AstraEndpointUrl": "Serveradresse",
+        "AstraModel": "Modell",
+        "AstraApiKeyOptional": "API-Schlüssel (optional)",
+        "AstraProviderNote": "Für Astra AI ist kein API-Schlüssel nötig. Ein Schlüssel wird nur bei einem externen Anbieter verwendet.",
+        "AstraProfileStudio": "Profil-Studio",
+        "AstraProfileTitle": "Beschreibe, wie dein Profil wirken soll.",
+        "AstraProfileSubtitle": "AstraGram erstellt dein Profil und wendet Name, Bio und Avatar an.",
+        "AstraProfileHint": "Zum Beispiel: dunkler Cyber-Stil, kurze Bio, klarer Nickname...",
+        "AstraDoIt": "Erstellen",
+        "AstraAnotherAvatar": "Anderen Avatar verwenden",
+        "AstraAISettings": "KI-Einstellungen",
+        "AstraAIManagesChannel": "KI verwaltet diesen Kanal",
+        "AstraChannelHint": "Beschreibe den Kanal in normalen Worten. Astra AI erstellt sieben verschiedene Beiträge und plant sie in Telegram.",
+        "AstraChannelInstructionHint": "Zum Beispiel: jeden Abend kurze Gaming-News, freundlicher Stil, kein Clickbait...",
+        "AstraGenerateSchedule7": "7 Beiträge erstellen und planen",
+        "AstraAutoProxySearch": "Automatische MTProto-Proxy-Suche",
+        "AstraAutoProxyInfo": "Wenn der aktuelle MTProto-Proxy keine Verbindung herstellt, sucht AstraGram neue öffentliche Proxys, prüft sie und wechselt automatisch."
+    },
+    "values-es": {
+        "AstraSettingsSummary": "IA, automatización, plugins y apariencia",
+        "AstraAIProvider": "Proveedor de IA",
+        "AstraProviderIntro": "Astra AI usa tu servidor Qwen local de forma predeterminada. Aquí puedes indicar otro endpoint compatible con OpenAI.",
+        "AstraEndpointUrl": "Dirección del servidor",
+        "AstraModel": "Modelo",
+        "AstraApiKeyOptional": "Clave API (opcional)",
+        "AstraProviderNote": "Astra AI no necesita clave API. Solo se usa una clave con un proveedor externo que la requiera.",
+        "AstraProfileStudio": "Estudio de perfil",
+        "AstraProfileTitle": "Describe cómo quieres que se vea tu perfil.",
+        "AstraProfileSubtitle": "AstraGram creará el perfil y aplicará el nombre, la bio y el avatar.",
+        "AstraProfileHint": "Por ejemplo: estilo cyber oscuro, bio corta, apodo limpio...",
+        "AstraDoIt": "Hacerlo",
+        "AstraAnotherAvatar": "Usar otro avatar",
+        "AstraAISettings": "Ajustes de IA",
+        "AstraAIManagesChannel": "La IA gestiona este canal",
+        "AstraChannelHint": "Describe el canal con palabras normales. Astra AI creará siete publicaciones distintas y las programará en Telegram.",
+        "AstraChannelInstructionHint": "Por ejemplo: noticias gaming cortas cada tarde, estilo amistoso, sin clickbait...",
+        "AstraGenerateSchedule7": "Crear y programar 7 publicaciones",
+        "AstraAutoProxySearch": "Búsqueda automática de proxy MTProto",
+        "AstraAutoProxyInfo": "Si el proxy MTProto actual no conecta, AstraGram busca proxies públicos nuevos, los comprueba y cambia automáticamente."
+    },
+    "values-it": {
+        "AstraSettingsSummary": "IA, automazione, plugin e aspetto",
+        "AstraAIProvider": "Provider IA",
+        "AstraProviderIntro": "Astra AI usa per impostazione predefinita il tuo server Qwen locale. Qui puoi indicare un altro endpoint compatibile con OpenAI.",
+        "AstraEndpointUrl": "Indirizzo server",
+        "AstraModel": "Modello",
+        "AstraApiKeyOptional": "Chiave API (facoltativa)",
+        "AstraProviderNote": "Astra AI non richiede una chiave API. Una chiave viene usata solo con un provider esterno che la richiede.",
+        "AstraProfileStudio": "Studio profilo",
+        "AstraProfileTitle": "Descrivi come vuoi che appaia il tuo profilo.",
+        "AstraProfileSubtitle": "AstraGram creerà il profilo e applicherà nome, bio e avatar.",
+        "AstraProfileHint": "Ad esempio: stile cyber scuro, bio breve, nickname pulito...",
+        "AstraDoIt": "Fallo",
+        "AstraAnotherAvatar": "Usa un altro avatar",
+        "AstraAISettings": "Impostazioni IA",
+        "AstraAIManagesChannel": "L’IA gestisce questo canale",
+        "AstraChannelHint": "Descrivi il canale con parole semplici. Astra AI creerà sette post diversi e li programmerà in Telegram.",
+        "AstraChannelInstructionHint": "Ad esempio: brevi notizie gaming ogni sera, stile amichevole, niente clickbait...",
+        "AstraGenerateSchedule7": "Crea e programma 7 post",
+        "AstraAutoProxySearch": "Ricerca automatica proxy MTProto",
+        "AstraAutoProxyInfo": "Se il proxy MTProto attuale non si connette, AstraGram trova nuovi proxy pubblici, li verifica e passa automaticamente a uno funzionante."
+    },
+    "values-nl": {
+        "AstraSettingsSummary": "AI, automatisering, plugins en uiterlijk",
+        "AstraAIProvider": "AI-provider",
+        "AstraProviderIntro": "Astra AI gebruikt standaard je lokale Qwen-server. Hier kun je een ander OpenAI-compatibel endpoint instellen.",
+        "AstraEndpointUrl": "Serveradres",
+        "AstraModel": "Model",
+        "AstraApiKeyOptional": "API-sleutel (optioneel)",
+        "AstraProviderNote": "Astra AI heeft geen API-sleutel nodig. Een sleutel wordt alleen gebruikt bij een externe provider die er een vereist.",
+        "AstraProfileStudio": "Profielstudio",
+        "AstraProfileTitle": "Beschrijf hoe je profiel moet aanvoelen.",
+        "AstraProfileSubtitle": "AstraGram maakt je profiel en past naam, bio en avatar toe.",
+        "AstraProfileHint": "Bijvoorbeeld: donkere cyberstijl, korte bio, nette nickname...",
+        "AstraDoIt": "Doen",
+        "AstraAnotherAvatar": "Andere avatar gebruiken",
+        "AstraAISettings": "AI-instellingen",
+        "AstraAIManagesChannel": "AI beheert dit kanaal",
+        "AstraChannelHint": "Beschrijf het kanaal in gewone woorden. Astra AI maakt zeven verschillende berichten en plant ze in Telegram.",
+        "AstraChannelInstructionHint": "Bijvoorbeeld: elke avond kort gamingnieuws, vriendelijke stijl, geen clickbait...",
+        "AstraGenerateSchedule7": "7 berichten maken en plannen",
+        "AstraAutoProxySearch": "Automatisch MTProto-proxy zoeken",
+        "AstraAutoProxyInfo": "Als de huidige MTProto-proxy niet verbindt, zoekt AstraGram nieuwe openbare proxies, controleert ze en schakelt automatisch over."
+    },
+    "values-pt-rBR": {
+        "AstraSettingsSummary": "IA, automação, plugins e aparência",
+        "AstraAIProvider": "Provedor de IA",
+        "AstraProviderIntro": "O Astra AI usa seu servidor Qwen local por padrão. Aqui você pode definir outro endpoint compatível com OpenAI.",
+        "AstraEndpointUrl": "Endereço do servidor",
+        "AstraModel": "Modelo",
+        "AstraApiKeyOptional": "Chave de API (opcional)",
+        "AstraProviderNote": "O Astra AI não precisa de chave de API. A chave só é usada com um provedor externo que a exija.",
+        "AstraProfileStudio": "Estúdio de perfil",
+        "AstraProfileTitle": "Descreva como você quer que seu perfil pareça.",
+        "AstraProfileSubtitle": "O AstraGram criará o perfil e aplicará nome, bio e avatar.",
+        "AstraProfileHint": "Por exemplo: estilo cyber escuro, bio curta, apelido limpo...",
+        "AstraDoIt": "Fazer",
+        "AstraAnotherAvatar": "Usar outro avatar",
+        "AstraAISettings": "Configurações de IA",
+        "AstraAIManagesChannel": "A IA gerencia este canal",
+        "AstraChannelHint": "Descreva o canal em palavras simples. O Astra AI criará sete posts diferentes e os agendará no Telegram.",
+        "AstraChannelInstructionHint": "Por exemplo: notícias curtas de jogos toda noite, estilo amigável, sem clickbait...",
+        "AstraGenerateSchedule7": "Criar e agendar 7 posts",
+        "AstraAutoProxySearch": "Busca automática de proxy MTProto",
+        "AstraAutoProxyInfo": "Se o proxy MTProto atual não conectar, o AstraGram encontra novos proxies públicos, verifica e troca automaticamente."
+    },
+    "values-ar": {
+        "AstraSettingsSummary": "الذكاء الاصطناعي والأتمتة والإضافات والمظهر",
+        "AstraAIProvider": "مزود الذكاء الاصطناعي",
+        "AstraProviderIntro": "يستخدم Astra AI خادم Qwen المحلي افتراضياً. يمكنك هنا تحديد خادم آخر متوافق مع OpenAI.",
+        "AstraEndpointUrl": "عنوان الخادم",
+        "AstraModel": "النموذج",
+        "AstraApiKeyOptional": "مفتاح API (اختياري)",
+        "AstraProviderNote": "لا يحتاج Astra AI إلى مفتاح API. يُستخدم المفتاح فقط مع مزود خارجي يطلبه.",
+        "AstraProfileStudio": "استوديو الملف الشخصي",
+        "AstraProfileTitle": "صف الشكل الذي تريد أن يكون عليه ملفك الشخصي.",
+        "AstraProfileSubtitle": "سينشئ AstraGram الملف الشخصي ويطبق الاسم والنبذة والصورة.",
+        "AstraProfileHint": "مثال: أسلوب سايبري داكن، نبذة قصيرة، اسم مرتب...",
+        "AstraDoIt": "تنفيذ",
+        "AstraAnotherAvatar": "استخدام صورة أخرى",
+        "AstraAISettings": "إعدادات الذكاء الاصطناعي",
+        "AstraAIManagesChannel": "الذكاء الاصطناعي يدير هذه القناة",
+        "AstraChannelHint": "صف القناة بكلمات بسيطة. سينشئ Astra AI سبعة منشورات مختلفة ويجدولها في Telegram.",
+        "AstraChannelInstructionHint": "مثال: أخبار ألعاب قصيرة كل مساء، أسلوب ودود، بلا عناوين مضللة...",
+        "AstraGenerateSchedule7": "إنشاء وجدولة 7 منشورات",
+        "AstraAutoProxySearch": "بحث تلقائي عن بروكسي MTProto",
+        "AstraAutoProxyInfo": "إذا تعذر اتصال بروكسي MTProto الحالي، سيبحث AstraGram عن بروكسيات عامة جديدة ويفحصها ويتحول تلقائياً إلى بروكسي يعمل."
+    },
+    "values-ko": {
+        "AstraSettingsSummary": "AI, 자동화, 플러그인 및 모양",
+        "AstraAIProvider": "AI 제공자",
+        "AstraProviderIntro": "Astra AI는 기본적으로 로컬 Qwen 서버를 사용합니다. 여기에서 다른 OpenAI 호환 엔드포인트를 설정할 수 있습니다.",
+        "AstraEndpointUrl": "서버 주소",
+        "AstraModel": "모델",
+        "AstraApiKeyOptional": "API 키 (선택 사항)",
+        "AstraProviderNote": "내장 Astra AI에는 API 키가 필요하지 않습니다. 외부 제공자가 요구할 때만 키를 사용합니다.",
+        "AstraProfileStudio": "프로필 스튜디오",
+        "AstraProfileTitle": "원하는 프로필 분위기를 설명하세요.",
+        "AstraProfileSubtitle": "AstraGram이 프로필을 만들고 이름, 소개 및 아바타를 적용합니다.",
+        "AstraProfileHint": "예: 어두운 사이버 스타일, 짧은 소개, 깔끔한 닉네임...",
+        "AstraDoIt": "실행",
+        "AstraAnotherAvatar": "다른 아바타 사용",
+        "AstraAISettings": "AI 설정",
+        "AstraAIManagesChannel": "AI가 이 채널을 관리함",
+        "AstraChannelHint": "채널을 평범한 말로 설명하세요. Astra AI가 서로 다른 7개의 게시물을 만들고 Telegram에 예약합니다.",
+        "AstraChannelInstructionHint": "예: 매일 저녁 짧은 게임 뉴스, 친근한 스타일, 클릭베이트 없음...",
+        "AstraGenerateSchedule7": "게시물 7개 생성 및 예약",
+        "AstraAutoProxySearch": "MTProto 프록시 자동 검색",
+        "AstraAutoProxyInfo": "현재 MTProto 프록시가 연결되지 않으면 AstraGram이 새 공개 프록시를 찾아 확인하고 자동으로 작동하는 프록시로 전환합니다."
+    }
+}
+
 def replace_visible_text(xml: str) -> str:
     # Only touch element bodies. Never replace inside resource names/attributes:
     # Java references such as R.string.TelegramVersion must keep their original IDs.
@@ -50,6 +273,17 @@ for path in res.glob("values*/strings.xml"):
     )
 
     text = replace_visible_text(text)
+
+    translations = ASTRA_TRANSLATIONS.get(path.parent.name, ASTRA_TRANSLATIONS["values"])
+    for key, value in translations.items():
+        escaped = (value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+        pattern = re.compile(r'<string\\s+name="' + re.escape(key) + r'"[^>]*>.*?</string>', re.S)
+        item = f'<string name="{key}">{escaped}</string>'
+        if pattern.search(text):
+            text = pattern.sub(item, text, count=1)
+        else:
+            text = text.replace("</resources>", "    " + item + "\n</resources>")
+
     path.write_text(text, encoding="utf-8")
 PY
 

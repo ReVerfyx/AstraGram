@@ -46,7 +46,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(org.telegram.messenger.R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle("Profile Studio");
+        actionBar.setTitle(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraProfileStudio));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -70,7 +70,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
         fragmentView = scroll;
 
         TextView title = new TextView(context);
-        title.setText("Tell AstraGram what your profile should feel like.");
+        title.setText(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraProfileTitle));
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
@@ -79,7 +79,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
         ));
 
         TextView subtitle = new TextView(context);
-        subtitle.setText("AstraGram will generate the profile and apply the name, bio and avatar for you.");
+        subtitle.setText(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraProfileSubtitle));
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         subtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         root.addView(subtitle, LayoutHelper.createLinear(
@@ -87,7 +87,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
         ));
 
         promptField = new EditTextBoldCursor(context);
-        promptField.setHint("For example: dark cyber style, short bio, clean nickname...");
+        promptField.setHint(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraProfileHint));
         promptField.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
         promptField.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         promptField.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
@@ -107,13 +107,13 @@ public class AstraProfileStudioActivity extends BaseFragment {
                 LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 16
         ));
 
-        runButton = makeButton(context, "Do it");
+        runButton = makeButton(context, org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraDoIt));
         runButton.setOnClickListener(v -> runAutomation(context));
         root.addView(runButton, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 50, 0, 0, 0, 10
         ));
 
-        alternateButton = makeButton(context, "Use another avatar");
+        alternateButton = makeButton(context, org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.AstraAnotherAvatar));
         alternateButton.setVisibility(View.GONE);
         alternateButton.setOnClickListener(v -> applyNextAvatar());
         root.addView(alternateButton, LayoutHelper.createLinear(

@@ -30,7 +30,7 @@ public class AstraProviderSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle("AI provider");
+        actionBar.setTitle(org.telegram.messenger.LocaleController.getString(R.string.AstraAIProvider));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -53,7 +53,7 @@ public class AstraProviderSettingsActivity extends BaseFragment {
         fragmentView = root;
 
         TextView intro = new TextView(context);
-        intro.setText("Astra AI uses your local Qwen server by default. You can override it with another OpenAI-compatible endpoint here.");
+        intro.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraProviderIntro));
         intro.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         intro.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         intro.setGravity(Gravity.START);
@@ -61,20 +61,20 @@ public class AstraProviderSettingsActivity extends BaseFragment {
                 LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 18
         ));
 
-        endpointField = makeField(context, "Endpoint URL");
+        endpointField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraEndpointUrl));
         endpointField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         endpointField.setText(AstraProviderStore.endpoint(context));
         root.addView(endpointField, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 56, 0, 0, 0, 10
         ));
 
-        modelField = makeField(context, "Model");
+        modelField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraModel));
         modelField.setText(AstraProviderStore.model(context));
         root.addView(modelField, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 56, 0, 0, 0, 10
         ));
 
-        keyField = makeField(context, "API key (optional)");
+        keyField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraApiKeyOptional));
         keyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         keyField.setText(AstraProviderStore.apiKey(context));
         root.addView(keyField, LayoutHelper.createLinear(
@@ -82,7 +82,7 @@ public class AstraProviderSettingsActivity extends BaseFragment {
         ));
 
         TextView note = new TextView(context);
-        note.setText("The built-in Astra AI needs no API key. A key is only used when you override the provider with one that requires it.");
+        note.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraProviderNote));
         note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         note.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
         root.addView(note, LayoutHelper.createLinear(

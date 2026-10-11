@@ -22,6 +22,19 @@ def replace_once(path, old, new, label):
         raise SystemExit(f"{label}: expected exactly one match in {path}, found {count}")
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
+def replace_first(path, old, new, label):
+    text = path.read_text(encoding="utf-8")
+    if old not in text:
+        raise SystemExit(f"{label}: match not found in {path}")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+def replace_all(path, old, new, label):
+    text = path.read_text(encoding="utf-8")
+    count = text.count(old)
+    if count < 1:
+        raise SystemExit(f"{label}: match not found in {path}")
+    path.write_text(text.replace(old, new), encoding="utf-8")
+
 def replace_between(path, start, end, replacement, label):
     text = path.read_text(encoding="utf-8")
     i = text.find(start)
@@ -452,7 +465,7 @@ replace_once(
     '''                    if (position == useProxyRow) {
                         checkCell.setTextAndCheck(getString(R.string.UseProxySettings), useProxySettings, true);
                     } else if (position == astraAutoSearchRow) {
-                        checkCell.setTextAndCheck("Automatic MTProto proxy search", AstraProxyDirectory.isEnabled(), astraAutoSearchTimeoutRow != -1);
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.AstraAutoProxySearch), AstraProxyDirectory.isEnabled(), astraAutoSearchTimeoutRow != -1);
                     } else if (position == rotationRow) {
                         checkCell.setTextAndCheck(getString(R.string.UseProxyRotation), SharedConfig.proxyRotationEnabled, true);
                     }
@@ -468,7 +481,7 @@ replace_once(
     '''                    if (position == rotationTimeoutInfoRow) {
                         cell.setText(getString(R.string.ProxyRotationTimeoutInfo));
                     } else if (position == astraAutoSearchInfoRow) {
-                        cell.setText("If the current MTProto proxy cannot connect, AstraGram downloads fresh public candidates, checks them with Telegram, and switches to a working proxy automatically.");
+                        cell.setText(LocaleController.getString(R.string.AstraAutoProxyInfo));
                     }
 ''',
     "Astra proxy auto-search info"
@@ -510,7 +523,7 @@ replace_once(
 ''',
     "Astra proxy auto-search timeout bind"
 )
-replace_once(
+replace_first(
     proxy_list,
     '''                if (position == useProxyRow) {
                     checkCell.setChecked(useProxySettings);
@@ -604,6 +617,126 @@ replace_once(
     "Astra proxy failover hook"
 )
 
+chat_enter = root / "TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java"
+replace_all(
+    chat_enter,
+    "showAiButton(lineCount > 2 && ",
+    "showAiButton(",
+    "Astra AI editor single-line visibility"
+)
+replace_once(
+    chat_enter,
+    "showAiButton(messageEditText != null && messageEditText.getLineCount() > 2 && ",
+    "showAiButton(messageEditText != null && ",
+    "Astra AI editor updateButtons visibility"
+)
+
+ai_editor = root / "TMessagesProj/src/main/java/org/telegram/ui/Components/AIEditorAlert.java"
+replace_once(
+    ai_editor,
+    '''import org.telegram.messenger.AndroidUtilities;
+''',
+    '''import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.astra.ai.AstraTextGenerator;
+''',
+    "Astra AI editor backend import"
+)
+replace_between(
+    ai_editor,
+    '''    private void request() {
+''',
+    '''    private void requestRich() {
+''',
+    '''    private void request() {
+        if (isRich()) {
+            requestRich();
+            return;
+        }
+
+        final int tab = tabs.getSelectedTab();
+        final String source = text == null ? "" : text.toString();
+        if (TextUtils.isEmpty(source.trim())) {
+            return;
+        }
+
+        String instruction;
+        if (tab == TAB_TRANSLATE) {
+            String target = TextUtils.isEmpty(to_lang) ? TranslateController.currentLanguage() : to_lang;
+            instruction = "Translate the text to language code " + target + ". Preserve meaning, paragraphs, links and emoji. Return only the translated text.";
+        } else if (tab == TAB_FIX) {
+            instruction = "Proofread the text. Fix spelling, grammar and punctuation while preserving the meaning and tone. Return only the corrected text.";
+        } else {
+            String custom = TextUtils.isEmpty(promptText) ? "" : promptText.trim();
+            instruction = TextUtils.isEmpty(custom)
+                    ? "Rewrite the text naturally and improve its style without changing the meaning. Return only the rewritten text."
+                    : "Rewrite the text according to this style instruction: " + custom + ". Preserve the meaning. Return only the rewritten text.";
+        }
+        if (emojify) {
+            instruction += " Add a small number of appropriate emoji.";
+        }
+
+        loading = true;
+        errored = false;
+        updateButton();
+
+        final SimpleTextView actionBarTitleTextView = actionBar.getTitleTextView();
+        actionBarTitleTextView.setRightDrawable(titleLoadingDrawable);
+        titleLoadingDrawable.start();
+
+        if (tab == TAB_TRANSLATE) {
+            translatedTextLoading = true;
+            translatedText = getString(R.string.Loading);
+        } else if (tab == TAB_STYLE) {
+            styledTextLoading = true;
+            styledText = getString(R.string.Loading);
+        } else {
+            fixedTextLoading = true;
+            fixedText = getString(R.string.Loading);
+        }
+        adapter.update(true);
+
+        final String systemPrompt = "You are Astra AI integrated into AstraGram's message editor. Follow the requested transformation exactly. Never add explanations, headings or quotation marks unless they are part of the transformed text.";
+        final String finalInstruction = instruction;
+        Utilities.globalQueue.postRunnable(() -> {
+            try {
+                String result = AstraTextGenerator.generate(getContext().getApplicationContext(), systemPrompt, finalInstruction + "\n\nTEXT:\n" + source);
+                AndroidUtilities.runOnUIThread(() -> {
+                    loading = false;
+                    actionBarTitleTextView.setRightDrawable(null);
+                    showLimit = false;
+                    errored = false;
+                    if (tab == TAB_TRANSLATE) {
+                        translatedTextLoading = false;
+                        translatedText = result;
+                    } else if (tab == TAB_STYLE) {
+                        styledTextLoading = false;
+                        styledText = result;
+                    } else {
+                        fixedTextLoading = false;
+                        fixedText = fixedTextToCopy = result;
+                    }
+                    updateButton();
+                    adapter.update(true);
+                });
+            } catch (Throwable error) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    loading = false;
+                    actionBarTitleTextView.setRightDrawable(null);
+                    errored = true;
+                    showLimit = false;
+                    updateButton();
+                    String message = error.getMessage() == null ? "Astra AI request failed" : error.getMessage();
+                    android.widget.Toast.makeText(getContext(), message, android.widget.Toast.LENGTH_LONG).show();
+                    adapter.update(true);
+                });
+            }
+        });
+    }
+
+''',
+    "Astra AI editor local backend"
+)
+
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
 replace_once(
     chat_edit,
@@ -621,7 +754,7 @@ replace_once(
             TextCell astraAiCell = new TextCell(context);
             astraAiCell.setBackgroundDrawable(Theme.getSelectorDrawable(false));
             astraAiCell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlueButton);
-            astraAiCell.setTextAndIcon("AI settings", R.drawable.msg_bot, true);
+            astraAiCell.setTextAndIcon(org.telegram.messenger.LocaleController.getString(R.string.AstraAISettings), R.drawable.msg_bot, true);
             astraAiCell.setOnClickListener(v -> presentFragment(new AstraChannelAiSettingsActivity(chatId)));
             settingsContainer.addView(astraAiCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         }
@@ -636,7 +769,7 @@ replace_once(
     settings,
     '        items.add(SettingCell.Factory.of(10, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_language, getString(R.string.SettingsLanguage), LocaleController.getCurrentLanguageName()));\n',
     '        items.add(SettingCell.Factory.of(10, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_language, getString(R.string.SettingsLanguage), LocaleController.getCurrentLanguageName()));\n'
-    '        items.add(SettingCell.Factory.of(30, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_chat, "AstraGram", "Automation, plugins and appearance"));\n',
+    '        items.add(SettingCell.Factory.of(30, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_chat, "AstraGram", LocaleController.getString(R.string.AstraSettingsSummary)));\n',
     "Astra settings row"
 )
 replace_once(
