@@ -63,11 +63,13 @@ for path in sorted((root / "TMessagesProj/src/main/res").glob("values*/strings.x
 
     original_names = decl.findall(original)
     current_names = decl.findall(current)
-    if original_names != current_names:
-        missing = [x for x in original_names if x not in current_names][:10]
-        added = [x for x in current_names if x not in original_names][:10]
+    missing = [x for x in original_names if x not in current_names]
+    added = [x for x in current_names if x not in original_names]
+    illegal_added = [x for x in added if not x.startswith("Astra")]
+    if missing or illegal_added:
         raise SystemExit(
-            f"Astra validation: resource IDs changed in {rel}; missing={missing}, added={added}"
+            f"Astra validation: upstream resource IDs changed in {rel}; "
+            f"missing={missing[:10]}, illegal_added={illegal_added[:10]}"
         )
 
     bad_astra_names.extend(

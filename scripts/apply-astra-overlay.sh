@@ -631,6 +631,13 @@ replace_once(
     "Astra AI editor updateButtons visibility"
 )
 
+replace_once(
+    chat_enter,
+    "showAiButton(messageEditText.getLineCount() > 2 && ",
+    "showAiButton(",
+    "Astra AI editor remaining one-line visibility"
+)
+
 ai_editor = root / "TMessagesProj/src/main/java/org/telegram/ui/Components/AIEditorAlert.java"
 replace_once(
     ai_editor,
