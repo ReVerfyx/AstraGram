@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.messenger.astra.AstraLocale;
 import org.telegram.messenger.astra.ai.AstraProviderStore;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenu;
@@ -116,16 +117,16 @@ public class AstraProviderSettingsActivity extends BaseFragment {
         String apiKey = keyField.getText().toString().trim();
 
         if (!endpoint.isEmpty() && !endpoint.startsWith("https://")) {
-            Toast.makeText(context, "Use an HTTPS endpoint", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, AstraLocale.get("https_only"), Toast.LENGTH_SHORT).show();
             return;
         }
         if (endpoint.isEmpty() != model.isEmpty()) {
-            Toast.makeText(context, "Set both endpoint and model", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, AstraLocale.get("set_both"), Toast.LENGTH_SHORT).show();
             return;
         }
 
         AstraProviderStore.save(context, endpoint, model, apiKey);
-        Toast.makeText(context, "Provider saved", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, AstraLocale.get("provider_saved"), Toast.LENGTH_SHORT).show();
         finishFragment();
     }
 }

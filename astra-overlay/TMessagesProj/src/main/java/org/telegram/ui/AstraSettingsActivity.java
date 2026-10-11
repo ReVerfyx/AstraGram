@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.R;
 import org.telegram.messenger.astra.AstraSettings;
+import org.telegram.messenger.astra.AstraLocale;
 import org.telegram.messenger.astra.ai.AstraProviderStore;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -137,7 +138,7 @@ public class AstraSettingsActivity extends BaseFragment {
             return "Not configured";
         }
         String model = AstraProviderStore.model(context);
-        return model.isEmpty() ? "Configured" : model;
+        return AstraProviderStore.isBuiltIn(context) ? AstraLocale.get("builtin_ai") : (model.isEmpty() ? AstraLocale.get("ai_provider") : model);
     }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {

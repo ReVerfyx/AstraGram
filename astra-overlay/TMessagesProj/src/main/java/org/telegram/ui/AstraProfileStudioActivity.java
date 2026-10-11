@@ -17,6 +17,7 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.astra.AstraSettings;
+import org.telegram.messenger.astra.AstraLocale;
 import org.telegram.messenger.astra.ai.AstraAiProvider;
 import org.telegram.messenger.astra.ai.AstraCallback;
 import org.telegram.messenger.astra.ai.AstraProviderStore;
@@ -170,7 +171,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
                         + (user.last_name == null || user.last_name.isEmpty() ? "" : " " + user.last_name)).trim();
         String currentBio = full != null && full.about != null ? full.about : "";
 
-        setRunning(true, "Creating your profile...");
+        setRunning(true, AstraLocale.get("creating_profile"));
         AstraAiProvider provider = AstraProviderStore.create(context.getApplicationContext());
         ProfileRequest request = new ProfileRequest(
                 instruction,
@@ -190,7 +191,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
     }
 
     private void applyPlan(ProfilePlan plan) {
-        statusView.setText("Applying changes to Telegram...");
+        statusView.setText(AstraLocale.get("applying_profile"));
         TelegramProfileApplier.apply(this, plan, new AstraCallback<ProfilePlan>() {
             @Override
             public void onSuccess(ProfilePlan value) {
@@ -203,7 +204,7 @@ public class AstraProfileStudioActivity extends BaseFragment {
                 alternateButton.setVisibility(
                         nextAvatarIndex < value.avatarOptions.size() ? View.VISIBLE : View.GONE
                 );
-                setRunning(false, "Done. The profile has been updated.");
+                setRunning(false, AstraLocale.get("profile_done"));
             }
 
             @Override

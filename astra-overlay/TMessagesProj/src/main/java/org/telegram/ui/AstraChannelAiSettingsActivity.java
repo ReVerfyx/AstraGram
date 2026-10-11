@@ -12,6 +12,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.astra.AstraLocale;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
@@ -206,7 +207,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
         enabled = true;
         enabledCell.setChecked(true);
         save(context, false);
-        setRunning(true, "Astra AI is writing seven posts...");
+        setRunning(true, AstraLocale.get("writing_7"));
 
         TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(chatId);
         String title = chat == null || chat.title == null ? "Telegram channel" : chat.title;
@@ -266,7 +267,7 @@ public class AstraChannelAiSettingsActivity extends BaseFragment {
             SendMessagesHelper.getInstance(currentAccount).sendMessage(params);
         }
 
-        setRunning(false, "Done. Seven posts are scheduled in Telegram.");
+        setRunning(false, AstraLocale.get("scheduled_done"));
         if (getParentActivity() != null) {
             Toast.makeText(getParentActivity(), "7 posts scheduled", Toast.LENGTH_SHORT).show();
         }
