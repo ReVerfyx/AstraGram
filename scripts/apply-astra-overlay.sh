@@ -744,6 +744,63 @@ replace_between(
     "Astra AI editor local backend"
 )
 
+translate_alert = root / "TMessagesProj/src/main/java/org/telegram/ui/Components/TranslateAlert2.java"
+replace_once(
+    translate_alert,
+    '''import org.telegram.messenger.AndroidUtilities;
+''',
+    '''import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.astra.ai.AstraTextGenerator;
+''',
+    "Astra manual translator backend import"
+)
+replace_between(
+    translate_alert,
+    '''        TLRPC.TL_messages_translateText req = new TLRPC.TL_messages_translateText();
+''',
+    '''    public static final String[] userAgents = new String[] {
+''',
+    '''        final String astraSource = textWithEntities.text == null ? "" : textWithEntities.text;
+        final String astraTarget = normalizeLanguage(lang);
+        Utilities.globalQueue.postRunnable(() -> {
+            try {
+                String result = AstraTextGenerator.generate(
+                        getContext().getApplicationContext(),
+                        "You are AstraGram translator. Translate faithfully, preserve paragraphs, links and emoji. Return only the translated text.",
+                        "Translate to language code " + astraTarget + "\\n\\nTEXT:\\n" + astraSource
+                );
+                AndroidUtilities.runOnUIThread(() -> {
+                    reqId = null;
+                    firstTranslation = false;
+                    textView.setText(preprocessText(result));
+                    adapter.updateMainView(textViewContainer);
+                });
+            } catch (Throwable error) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    reqId = null;
+                    if (firstTranslation) {
+                        dismiss();
+                        NotificationCenter.getGlobalInstance().postNotificationName(
+                                NotificationCenter.showBulletin,
+                                Bulletin.TYPE_ERROR,
+                                LocaleController.getString(R.string.TranslationFailedAlert2)
+                        );
+                    } else {
+                        BulletinFactory.of((FrameLayout) containerView, resourcesProvider)
+                                .createErrorBulletin(LocaleController.getString(R.string.TranslationFailedAlert2))
+                                .show();
+                        headerView.toLanguageTextView.setText(languageName(toLanguage = prevToLanguage));
+                        adapter.updateMainView(textViewContainer);
+                    }
+                });
+            }
+        });
+    }
+
+''',
+    "Astra manual translator local backend"
+)
+
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
 replace_once(
     chat_edit,
