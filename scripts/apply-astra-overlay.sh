@@ -520,6 +520,244 @@ replace_once(
     "remove package installer permission"
 )
 
+# Astra MTProto auto-search UI + failover hook.
+proxy_list = root / "TMessagesProj/src/main/java/org/telegram/ui/ProxyListActivity.java"
+replace_once(
+    proxy_list,
+    '''import org.telegram.messenger.SharedConfig;
+''',
+    '''import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.astra.AstraProxyDirectory;
+''',
+    "Astra proxy directory import"
+)
+replace_once(
+    proxy_list,
+    '''    private int rotationRow;
+    private int rotationTimeoutRow;
+    private int rotationTimeoutInfoRow;
+    private int deleteAllRow;
+''',
+    '''    private int rotationRow;
+    private int rotationTimeoutRow;
+    private int rotationTimeoutInfoRow;
+    private int astraAutoSearchRow;
+    private int astraAutoSearchTimeoutRow;
+    private int astraAutoSearchInfoRow;
+    private int deleteAllRow;
+''',
+    "Astra proxy rows"
+)
+replace_once(
+    proxy_list,
+    '''            } else if (position == rotationRow) {
+                SharedConfig.proxyRotationEnabled = !SharedConfig.proxyRotationEnabled;
+''',
+    '''            } else if (position == astraAutoSearchRow) {
+                boolean enabled = !AstraProxyDirectory.isEnabled();
+                AstraProxyDirectory.setEnabled(enabled);
+                if (enabled) {
+                    AstraProxyDirectory.refreshNow(currentAccount, null);
+                } else {
+                    AstraProxyDirectory.cancelPendingRefresh();
+                }
+                updateRows(true);
+            } else if (position == rotationRow) {
+                SharedConfig.proxyRotationEnabled = !SharedConfig.proxyRotationEnabled;
+''',
+    "Astra proxy auto-search click"
+)
+replace_once(
+    proxy_list,
+    '''        useProxyRow = rowCount++;
+        if (useProxySettings && SharedConfig.currentProxy != null && SharedConfig.proxyList.size() > 1 && IS_PROXY_ROTATION_AVAILABLE) {
+''',
+    '''        useProxyRow = rowCount++;
+        astraAutoSearchRow = rowCount++;
+        if (AstraProxyDirectory.isEnabled()) {
+            astraAutoSearchTimeoutRow = rowCount++;
+            astraAutoSearchInfoRow = rowCount++;
+        } else {
+            astraAutoSearchTimeoutRow = -1;
+            astraAutoSearchInfoRow = -1;
+        }
+        if (useProxySettings && SharedConfig.currentProxy != null && SharedConfig.proxyList.size() > 1 && IS_PROXY_ROTATION_AVAILABLE) {
+''',
+    "Astra proxy auto-search rows layout"
+)
+replace_once(
+    proxy_list,
+    '''                    if (position == proxyAddRow) {
+                        textCell.setText(getString(R.string.AddProxy), deleteAllRow != -1);
+''',
+    '''                    if (position == proxyAddRow) {
+                        textCell.setText(getString(R.string.AddProxy), deleteAllRow != -1);
+''',
+    "Astra proxy text setting anchor"
+)
+replace_once(
+    proxy_list,
+    '''                    if (position == useProxyRow) {
+                        checkCell.setTextAndCheck(getString(R.string.UseProxySettings), useProxySettings, rotationRow != -1);
+                    } else if (position == rotationRow) {
+                        checkCell.setTextAndCheck(getString(R.string.UseProxyRotation), SharedConfig.proxyRotationEnabled, true);
+                    }
+''',
+    '''                    if (position == useProxyRow) {
+                        checkCell.setTextAndCheck(getString(R.string.UseProxySettings), useProxySettings, true);
+                    } else if (position == astraAutoSearchRow) {
+                        checkCell.setTextAndCheck("Automatic MTProto proxy search", AstraProxyDirectory.isEnabled(), astraAutoSearchTimeoutRow != -1);
+                    } else if (position == rotationRow) {
+                        checkCell.setTextAndCheck(getString(R.string.UseProxyRotation), SharedConfig.proxyRotationEnabled, true);
+                    }
+''',
+    "Astra proxy auto-search toggle bind"
+)
+replace_once(
+    proxy_list,
+    '''                    if (position == rotationTimeoutInfoRow) {
+                        cell.setText(getString(R.string.ProxyRotationTimeoutInfo));
+                    }
+''',
+    '''                    if (position == rotationTimeoutInfoRow) {
+                        cell.setText(getString(R.string.ProxyRotationTimeoutInfo));
+                    } else if (position == astraAutoSearchInfoRow) {
+                        cell.setText("If the current MTProto proxy cannot connect, AstraGram downloads fresh public candidates, checks them with Telegram, and switches to a working proxy automatically.");
+                    }
+''',
+    "Astra proxy auto-search info"
+)
+replace_once(
+    proxy_list,
+    '''                    if (position == rotationTimeoutRow) {
+                        SlideChooseView chooseView = (SlideChooseView) holder.itemView;
+                        ArrayList<Integer> options = new ArrayList<>(ProxyRotationController.ROTATION_TIMEOUTS);
+                        String[] values = new String[options.size()];
+                        for (int i = 0; i < options.size(); i++) {
+                            values[i] = LocaleController.formatString(R.string.ProxyRotationTimeoutSeconds, options.get(i));
+                        }
+                        chooseView.setCallback(i -> {
+                            SharedConfig.proxyRotationTimeout = i;
+                            SharedConfig.saveConfig();
+                        });
+                        chooseView.setOptions(SharedConfig.proxyRotationTimeout, values);
+                    }
+''',
+    '''                    if (position == rotationTimeoutRow || position == astraAutoSearchTimeoutRow) {
+                        SlideChooseView chooseView = (SlideChooseView) holder.itemView;
+                        ArrayList<Integer> options = new ArrayList<>(ProxyRotationController.ROTATION_TIMEOUTS);
+                        String[] values = new String[options.size()];
+                        for (int i = 0; i < options.size(); i++) {
+                            values[i] = LocaleController.formatString(R.string.ProxyRotationTimeoutSeconds, options.get(i));
+                        }
+                        if (position == rotationTimeoutRow) {
+                            chooseView.setCallback(i -> {
+                                SharedConfig.proxyRotationTimeout = i;
+                                SharedConfig.saveConfig();
+                            });
+                            chooseView.setOptions(SharedConfig.proxyRotationTimeout, values);
+                        } else {
+                            chooseView.setCallback(AstraProxyDirectory::setTimeoutIndex);
+                            chooseView.setOptions(AstraProxyDirectory.getTimeoutIndex(), values);
+                        }
+                    }
+''',
+    "Astra proxy auto-search timeout bind"
+)
+replace_once(
+    proxy_list,
+    '''                if (position == useProxyRow) {
+                    checkCell.setChecked(useProxySettings);
+                } else if (position == rotationRow) {
+                    checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                }
+''',
+    '''                if (position == useProxyRow) {
+                    checkCell.setChecked(useProxySettings);
+                } else if (position == astraAutoSearchRow) {
+                    checkCell.setChecked(AstraProxyDirectory.isEnabled());
+                } else if (position == rotationRow) {
+                    checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                }
+''',
+    "Astra proxy payload checked"
+)
+replace_once(
+    proxy_list,
+    '''                if (position == useProxyRow) {
+                    checkCell.setChecked(useProxySettings);
+                } else if (position == rotationRow) {
+                    checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                }
+''',
+    '''                if (position == useProxyRow) {
+                    checkCell.setChecked(useProxySettings);
+                } else if (position == astraAutoSearchRow) {
+                    checkCell.setChecked(AstraProxyDirectory.isEnabled());
+                } else if (position == rotationRow) {
+                    checkCell.setChecked(SharedConfig.proxyRotationEnabled);
+                }
+''',
+    "Astra proxy attached checked"
+)
+replace_once(
+    proxy_list,
+    '''            return position == useProxyRow || position == rotationRow || position == proxyAddRow || position == deleteAllRow || position >= proxyStartRow && position < proxyEndRow;
+''',
+    '''            return position == useProxyRow || position == astraAutoSearchRow || position == rotationRow || position == proxyAddRow || position == deleteAllRow || position >= proxyStartRow && position < proxyEndRow;
+''',
+    "Astra proxy enabled rows"
+)
+replace_once(
+    proxy_list,
+    '''            } else if (position == rotationTimeoutInfoRow) {
+                return -11;
+            } else if (position >= proxyStartRow && position < proxyEndRow) {
+''',
+    '''            } else if (position == rotationTimeoutInfoRow) {
+                return -11;
+            } else if (position == astraAutoSearchRow) {
+                return -12;
+            } else if (position == astraAutoSearchTimeoutRow) {
+                return -13;
+            } else if (position == astraAutoSearchInfoRow) {
+                return -14;
+            } else if (position >= proxyStartRow && position < proxyEndRow) {
+''',
+    "Astra proxy stable ids"
+)
+replace_once(
+    proxy_list,
+    '''            } else if (position == useProxyRow || position == rotationRow) {
+                return VIEW_TYPE_TEXT_CHECK;
+            } else if (position == connectionsHeaderRow) {
+                return VIEW_TYPE_HEADER;
+            } else if (position == rotationTimeoutRow) {
+                return VIEW_TYPE_SLIDE_CHOOSER;
+''',
+    '''            } else if (position == useProxyRow || position == astraAutoSearchRow || position == rotationRow) {
+                return VIEW_TYPE_TEXT_CHECK;
+            } else if (position == connectionsHeaderRow) {
+                return VIEW_TYPE_HEADER;
+            } else if (position == rotationTimeoutRow || position == astraAutoSearchTimeoutRow) {
+                return VIEW_TYPE_SLIDE_CHOOSER;
+''',
+    "Astra proxy view types"
+)
+
+proxy_rotation = root / "TMessagesProj/src/main/java/org/telegram/messenger/ProxyRotationController.java"
+replace_once(
+    proxy_rotation,
+    '''        } else if (id == NotificationCenter.didUpdateConnectionState && account == UserConfig.selectedAccount) {
+            if (!SharedConfig.isProxyEnabled() && !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1) {
+''',
+    '''        } else if (id == NotificationCenter.didUpdateConnectionState && account == UserConfig.selectedAccount) {
+            org.telegram.messenger.astra.AstraProxyDirectory.onConnectionState(account, ConnectionsManager.getInstance(account).getConnectionState());
+            if (!SharedConfig.isProxyEnabled() && !SharedConfig.proxyRotationEnabled || SharedConfig.proxyList.size() <= 1) {
+''',
+    "Astra proxy failover hook"
+)
+
 chat_edit = root / "TMessagesProj/src/main/java/org/telegram/ui/ChatEditActivity.java"
 replace_once(
     chat_edit,
