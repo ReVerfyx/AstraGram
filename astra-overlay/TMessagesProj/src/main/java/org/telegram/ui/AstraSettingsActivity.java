@@ -124,12 +124,12 @@ public class AstraSettingsActivity extends BaseFragment {
     private static String motionLabel(Context context) {
         float scale = AstraSettings.motionScale(context);
         if (scale < 0.9f) {
-            return "Soft";
+            return org.telegram.messenger.LocaleController.getString(R.string.AstraSoft);
         }
         if (scale > 1.15f) {
-            return "Expressive";
+            return org.telegram.messenger.LocaleController.getString(R.string.AstraExpressive);
         }
-        return "Normal";
+        return org.telegram.messenger.LocaleController.getString(R.string.AstraNormal);
     }
 
     private static String providerLabel(Context context) {
@@ -185,23 +185,23 @@ public class AstraSettingsActivity extends BaseFragment {
             if (holder.getItemViewType() == TYPE_HEADER) {
                 HeaderCell cell = (HeaderCell) holder.itemView;
                 if (position == ROW_APPEARANCE) {
-                    cell.setText("Appearance");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraAppearance));
                 } else if (position == ROW_AUTOMATION) {
-                    cell.setText("Automation");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraAutomation));
                 } else {
-                    cell.setText("Extensions");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraExtensions));
                 }
             } else if (holder.getItemViewType() == TYPE_CHECK) {
                 TextCheckCell cell = (TextCheckCell) holder.itemView;
                 if (position == ROW_ANIMATIONS) {
                     cell.setTextAndCheck(
-                            "Astra animations",
+                            org.telegram.messenger.LocaleController.getString(R.string.AstraAnimations),
                             AstraSettings.animationsEnabled(context),
                             false
                     );
                 } else {
                     cell.setTextAndCheck(
-                            "Apply approved changes automatically",
+                            org.telegram.messenger.LocaleController.getString(R.string.AstraApplyApproved),
                             AstraSettings.profileAutomationEnabled(context),
                             false
                     );
@@ -209,24 +209,24 @@ public class AstraSettingsActivity extends BaseFragment {
             } else if (holder.getItemViewType() == TYPE_VALUE) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
                 if (position == ROW_MOTION) {
-                    cell.setTextAndValue("Motion style", motionLabel(context), false);
+                    cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraMotionStyle), motionLabel(context), false);
                 } else if (position == ROW_PROFILE_STUDIO) {
                     cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraProfileStudio), org.telegram.messenger.LocaleController.getString(R.string.AstraDoIt), true);
                 } else if (position == ROW_PROVIDER) {
                     cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraAIProvider), providerLabel(context), true);
                 } else if (position == ROW_PROVIDER_CONFIG) {
-                    cell.setTextAndValue("Provider settings", "Endpoint, model, key", false);
+                    cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraProviderSettings), org.telegram.messenger.LocaleController.getString(R.string.AstraEndpointUrl), false);
                 } else {
-                    cell.setTextAndValue("Plugins", ".asplug", false);
+                    cell.setTextAndValue(org.telegram.messenger.LocaleController.getString(R.string.AstraPlugins), ".asplug", false);
                 }
             } else {
                 TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                 if (position == ROW_APPEARANCE_INFO) {
-                    cell.setText("Smooth motion is enabled by default. You can reduce or disable it here.");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraAppearanceInfo));
                 } else if (position == ROW_AUTOMATION_INFO) {
-                    cell.setText("Profile Studio can apply generated names, bios and avatars directly after you start the action.");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraAutomationInfo));
                 } else {
-                    cell.setText("Install and manage AstraGram extension packages.");
+                    cell.setText(org.telegram.messenger.LocaleController.getString(R.string.AstraExtensionsInfo));
                 }
             }
         }
