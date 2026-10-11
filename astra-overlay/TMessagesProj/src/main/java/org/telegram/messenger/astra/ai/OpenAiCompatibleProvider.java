@@ -1,5 +1,7 @@
 package org.telegram.messenger.astra.ai;
 
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -67,7 +69,15 @@ public final class OpenAiCompatibleProvider implements AstraAiProvider {
             headers.put("Authorization", "Bearer " + apiKey.trim());
         }
 
-        String response = transport.postJson(endpoint, body.toString(), headers);
+        String response;
+        try {
+            response = transport.postJson(endpoint, body.toString(), headers);
+        } catch (Exception error) {
+            if ("astragram-local".equals(id)) {
+                throw new IllegalStateException("Astra AI: " + LocaleController.getString(R.string.ErrorOccurred));
+            }
+            throw error;
+        }
         JSONObject root = new JSONObject(response);
         String content = root.getJSONArray("choices")
                 .getJSONObject(0)

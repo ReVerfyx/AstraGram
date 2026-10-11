@@ -2,6 +2,8 @@ package org.telegram.messenger.astra.ai;
 
 import android.content.Context;
 
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -34,8 +36,16 @@ public final class AstraTextGenerator {
             headers.put("Authorization", "Bearer " + apiKey);
         }
 
-        String response = new HttpJsonTransport(15000, 180000)
-                .postJson(AstraProviderStore.endpoint(context), body.toString(), headers);
+        String response;
+        try {
+            response = new HttpJsonTransport(15000, 180000)
+                    .postJson(AstraProviderStore.endpoint(context), body.toString(), headers);
+        } catch (Exception error) {
+            if (AstraProviderStore.isBuiltIn(context)) {
+                throw new IllegalStateException("Astra AI: " + LocaleController.getString(R.string.ErrorOccurred));
+            }
+            throw error;
+        }
 
         JSONObject root = new JSONObject(response);
         return root.getJSONArray("choices")

@@ -61,22 +61,24 @@ public class AstraProviderSettingsActivity extends BaseFragment {
                 LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 18
         ));
 
+        boolean builtIn = AstraProviderStore.isBuiltIn(context);
+
         endpointField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraEndpointUrl));
         endpointField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        endpointField.setText(AstraProviderStore.endpoint(context));
+        endpointField.setText(builtIn ? "" : AstraProviderStore.endpoint(context));
         root.addView(endpointField, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 56, 0, 0, 0, 10
         ));
 
         modelField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraModel));
-        modelField.setText(AstraProviderStore.model(context));
+        modelField.setText(builtIn ? "" : AstraProviderStore.model(context));
         root.addView(modelField, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 56, 0, 0, 0, 10
         ));
 
         keyField = makeField(context, org.telegram.messenger.LocaleController.getString(R.string.AstraApiKeyOptional));
         keyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        keyField.setText(AstraProviderStore.apiKey(context));
+        keyField.setText(builtIn ? "" : AstraProviderStore.apiKey(context));
         root.addView(keyField, LayoutHelper.createLinear(
                 LayoutHelper.MATCH_PARENT, 56, 0, 0, 0, 10
         ));
